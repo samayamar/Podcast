@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:">
+<meta name="referrer" content="no-referrer">
+<title>Podcast-Übersicht</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1d2128;
+    --muted: #5d6573;
+    --line: #dde1e7;
+    --accent: #1f5fbf;
+    --placeholder-a: #c9d0da;
+    --placeholder-b: #e3e7ed;
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181d;
+      --card: #1f242b;
+      --text: #e7eaee;
+      --muted: #a2abb8;
+      --line: #313843;
+      --accent: #7fb0ff;
+      --placeholder-a: #39414d;
+      --placeholder-b: #2a3039;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header, main { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  header { padding-top: 24px; padding-bottom: 8px; }
+  h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  .meta { color: var(--muted); font-size: 0.9rem; }
+  a { color: var(--accent); }
+  [hidden] { display: none !important; }
+
+  /* Kachelraster */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    padding: 16px 0 32px;
+  }
+  .tile {
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    padding: 0;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .tile:hover, .tile:focus-visible { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+  .tile:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .tile-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .tile h2 { margin: 0; font-size: 1.05rem; line-height: 1.3; }
+  .tile p { margin: 0; color: var(--muted); font-size: 0.9rem;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .tile .meta { margin-top: auto; padding-top: 6px; }
+
+  /* Cover und Platzhalter */
+  .cover {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: var(--placeholder-b);
+  }
+  .placeholder {
+    background:
+      radial-gradient(circle at 50% 42%, var(--placeholder-b) 0 18%, transparent 19%),
+      radial-gradient(circle at 50% 42%, var(--placeholder-a) 0 30%, transparent 31%),
+      linear-gradient(135deg, var(--placeholder-b), var(--placeholder-a));
+  }
+
+  /* Detailansicht */
+  .back {
+    font: inherit;
+    margin: 16px 0;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .back:hover { border-color: var(--accent); }
+  .podcast-head { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 24px; }
+  .podcast-head .cover { width: 180px; flex: none; border-radius: var(--radius); }
+  .podcast-head h2 { margin: 0 0 8px; font-size: 1.5rem; line-height: 1.25; }
+  .podcast-head p { margin: 0 0 8px; }
+  .episodes { list-style: none; margin: 0 0 40px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .episode {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    gap: 14px;
+  }
+  .episode .cover { width: 72px; flex: none; border-radius: 8px; }
+  .episode-body { flex: 1; min-width: 0; }
+  .episode h3 { margin: 0 0 2px; font-size: 1.05rem; line-height: 1.3; }
+  .episode p { margin: 8px 0; overflow-wrap: anywhere; }
+  .episode audio { width: 100%; margin-top: 6px; }
+  .notice {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin: 16px 0;
+  }
+  code { background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    .podcast-head { flex-direction: column; }
+    .podcast-head .cover { width: 140px; }
+    .episode { flex-direction: column; }
+    .episode .cover { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Podcast-Übersicht</h1>
+  <div class="meta" id="status">Daten werden geladen …</div>
+</header>
+
+<main>
+  <section id="overview" aria-label="Podcasts">
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="detail" hidden aria-live="polite">
+    <button type="button" class="back" id="back">← Zurück zur Übersicht</button>
+    <div id="detail-content"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  const statusEl = document.getElementById("status");
+  const gridEl = document.getElementById("grid");
+  const overviewEl = document.getElementById("overview");
+  const detailEl = document.getElementById("detail");
+  const detailContentEl = document.getElementById("detail-content");
+  const backBtn = document.getElementById("back");
+
+  let podcasts = [];
+  let lastTile = null;
+
+  const dateFmt = new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const dateTimeFmt = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" });
+
+  // Hilfsfunktion: Element mit Klasse und reinem Text erzeugen (kein innerHTML)
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  // Nur http(s)-Adressen zulassen, alles andere (z. B. javascript:) verwerfen
+  function safeUrl(value) {
+    if (typeof value !== "string" || !value) return null;
+    try {
+      const url = new URL(value, location.href);
+      return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function formatDate(iso, withTime) {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d)) return null;
+    return (withTime ? dateTimeFmt : dateFmt).format(d);
+  }
+
+  function externalLink(href, text) {
+    const a = el("a", null, text);
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    return a;
+  }
+
+  // Cover-Bild oder neutraler CSS-Platzhalter
+  function cover(src, alt) {
+    const url = safeUrl(src);
+    if (!url) {
+      const ph = el("div", "cover placeholder");
+      ph.setAttribute("role", "img");
+      ph.setAttribute("aria-label", "Kein Cover vorhanden");
+      return ph;
+    }
+    const img = el("img", "cover");
+    img.src = url;
+    img.alt = alt || "";
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.referrerPolicy = "no-referrer";
+    img.addEventListener("error", function () {
+      img.replaceWith(cover(null));
+    }, { once: true });
+    return img;
+  }
+
+  function countEpisodes(p) {
+    return typeof p.episode_count === "number" ? p.episode_count : (p.episodes || []).length;
+  }
+
+  function folgenText(n) {
+    return n === 1 ? "1 Folge" : n + " Folgen";
+  }
+
+  function renderOverview() {
+    gridEl.replaceChildren();
+    podcasts.forEach(function (p, index) {
+      const tile = el("button", "tile");
+      tile.type = "button";
+      tile.setAttribute("aria-label", (p.title || "Podcast") + " – Folgen anzeigen");
+
+      tile.append(cover(p.image, ""));
+
+      const body = el("div", "tile-body");
+      body.append(el("h2", null, p.title || "Ohne Titel"));
+      if (p.description) body.append(el("p", null, p.description));
+
+      const episodes = p.episodes || [];
+      const latest = episodes.length ? formatDate(episodes[0].published) : null;
+      let meta = folgenText(countEpisodes(p));
+      if (latest) meta += " · letzte Folge: " + latest;
+      body.append(el("div", "meta", meta));
+
+      tile.append(body);
+      tile.addEventListener("click", function () {
+        lastTile = tile;
+        location.hash = "podcast-" + index;
+      });
+      gridEl.append(tile);
+    });
+  }
+
+  function renderDetail(p) {
+    detailContentEl.replaceChildren();
+
+    const head = el("div", "podcast-head");
+    head.append(cover(p.image, "Cover von " + (p.title || "Podcast")));
+    const info = el("div");
+    info.append(el("h2", null, p.title || "Ohne Titel"));
+    if (p.description) info.append(el("p", null, p.description));
+    const meta = el("div", "meta");
+    meta.append(document.createTextNode(folgenText(countEpisodes(p))));
+    const updated = formatDate(p.last_updated, true);
+    if (updated) meta.append(document.createTextNode(" · abgerufen am " + updated));
+    const site = safeUrl(p.link);
+    if (site) {
+      meta.append(document.createTextNode(" · "));
+      meta.append(externalLink(site, "Webseite"));
+    }
+    info.append(meta);
+    head.append(info);
+    detailContentEl.append(head);
+
+    const episodes = (p.episodes || []).slice(0, 20);
+    if (!episodes.length) {
+      detailContentEl.append(el("div", "notice", "Für diesen Podcast sind keine Folgen vorhanden."));
+      return;
+    }
+
+    const heading = el("h3", null, "Neueste Folgen");
+    heading.style.margin = "0 0 12px";
+    detailContentEl.append(heading);
+
+    const list = el("ul", "episodes");
+    episodes.forEach(function (ep) {
+      const item = el("li", "episode");
+      if (ep.image) item.append(cover(ep.image, ""));
+
+      const body = el("div", "episode-body");
+      body.append(el("h3", null, ep.title || "Ohne Titel"));
+
+      const parts = [];
+      const date = formatDate(ep.published);
+      if (date) parts.push(date);
+      if (ep.duration) parts.push("Dauer: " + ep.duration);
+      if (parts.length) body.append(el("div", "meta", parts.join(" · ")));
+
+      if (ep.summary) body.append(el("p", null, ep.summary));
+
+      const audio = safeUrl(ep.audio_url);
+      if (audio) {
+        const player = document.createElement("audio");
+        player.controls = true;
+        player.preload = "none";
+        player.src = audio;
+        player.textContent = "Ihr Browser unterstützt keine Audio-Wiedergabe.";
+        body.append(player);
+      }
+
+      const link = safeUrl(ep.link);
+      if (link) {
+        const linkLine = el("div", "meta");
+        linkLine.append(externalLink(link, "Zur Folge"));
+        body.append(linkLine);
+      }
+
+      item.append(body);
+      list.append(item);
+    });
+    detailContentEl.append(list);
+  }
+
+  // Ansicht anhand des URL-Fragments wählen (#podcast-3), damit der Zurück-Button des Browsers funktioniert
+  function route() {
+    const match = /^#podcast-(\d+)$/.exec(location.hash);
+    const p = match ? podcasts[Number(match[1])] : null;
+
+    // Laufende Wiedergabe beim Verlassen der Detailansicht stoppen
+    detailEl.querySelectorAll("audio").forEach(function (a) { a.pause(); });
+
+    if (p) {
+      renderDetail(p);
+      overviewEl.hidden = true;
+      detailEl.hidden = false;
+      document.title = (p.title || "Podcast") + " – Podcast-Übersicht";
+      window.scrollTo(0, 0);
+      backBtn.focus({ preventScroll: true });
+    } else {
+      detailEl.hidden = true;
+      overviewEl.hidden = false;
+      detailContentEl.replaceChildren();
+      document.title = "Podcast-Übersicht";
+      if (lastTile) lastTile.focus();
+    }
+  }
+
+  backBtn.addEventListener("click", function () {
+    if (history.length > 1 && /^#podcast-/.test(location.hash)) {
+      history.back();
+    } else {
+      location.hash = "";
+    }
+  });
+  window.addEventListener("hashchange", route);
+
+  function showError(message, hint) {
+    statusEl.textContent = message;
+    const box = el("div", "notice");
+    box.append(el("strong", null, message));
+    if (hint) box.append(el("p", null, hint));
+    gridEl.replaceWith(box);
+  }
+
+  fetch("data/podcasts.json", { cache: "no-cache" })
+    .then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then(function (data) {
+      podcasts = Array.isArray(data && data.podcasts) ? data.podcasts : [];
+      if (!podcasts.length) {
+        showError("Noch keine Podcasts vorhanden.",
+          "Bitte Feed-Adressen in feeds.txt eintragen und „python update_feeds.py“ ausführen.");
+        return;
+      }
+      const generated = formatDate(data.generated, true);
+      statusEl.textContent = podcasts.length + (podcasts.length === 1 ? " Podcast" : " Podcasts") +
+        (generated ? " · Stand: " + generated : "");
+      renderOverview();
+      route();
+    })
+    .catch(function () {
+      if (location.protocol === "file:") {
+        showError("Die Daten können nicht direkt aus der Datei geladen werden.",
+          "Bitte im Projektordner „python -m http.server“ starten und http://localhost:8000 öffnen.");
+      } else {
+        showError("Die Datei data/podcasts.json konnte nicht geladen werden.",
+          "Bitte zuerst „python update_feeds.py“ ausführen.");
+      }
+    });
+})();
+</script>
+</body>
+</html>
