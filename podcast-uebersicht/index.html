@@ -5,142 +5,234 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:">
 <meta name="referrer" content="no-referrer">
-<title>Podcast-Übersicht</title>
+<meta name="theme-color" content="#fff4d6">
+<title>Podcasts</title>
 <style>
   :root {
-    --bg: #f4f5f7;
-    --card: #ffffff;
-    --text: #1d2128;
-    --muted: #5d6573;
-    --line: #dde1e7;
-    --accent: #1f5fbf;
-    --placeholder-a: #c9d0da;
-    --placeholder-b: #e3e7ed;
-    --radius: 12px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #15181d;
-      --card: #1f242b;
-      --text: #e7eaee;
-      --muted: #a2abb8;
-      --line: #313843;
-      --accent: #7fb0ff;
-      --placeholder-a: #39414d;
-      --placeholder-b: #2a3039;
-    }
+    color-scheme: light;
+    --bg: #fff4d6;
+    --ink: #2b2147;
+    --purple: #6a4cff;
+    --purple-dark: #4b32c9;
+    --yellow: #ffcf33;
+    --white: #ffffff;
+    --c1: #ff7a3d;
+    --c2: #20b8a6;
+    --c3: #ff4f8b;
+    --c4: #6a4cff;
+    --c5: #3fae49;
+    --c6: #2f8cff;
+    --radius: 24px;
+    --shadow: 0 6px 0 rgba(43, 33, 71, .18);
+    --player-h: 0px;
   }
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
+    font-family: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 10% 0%, #ffe59a 0 120px, transparent 121px),
+      radial-gradient(circle at 95% 8%, #ffd9e6 0 90px, transparent 91px),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--ink);
+    line-height: 1.3;
+    padding-bottom: calc(var(--player-h) + 24px);
   }
   header, main { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
-  header { padding-top: 24px; padding-bottom: 8px; }
-  h1 { margin: 0 0 4px; font-size: 1.6rem; }
-  .meta { color: var(--muted); font-size: 0.9rem; }
-  a { color: var(--accent); }
+  header { padding-top: 20px; }
+  h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; color: var(--purple); }
   [hidden] { display: none !important; }
-
-  /* Kachelraster */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
-    padding: 16px 0 32px;
-  }
-  .tile {
-    display: flex;
-    flex-direction: column;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    overflow: hidden;
-    text-align: left;
-    font: inherit;
-    color: inherit;
-    padding: 0;
-    cursor: pointer;
-    transition: transform .15s, box-shadow .15s;
-  }
-  .tile:hover, .tile:focus-visible { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
-  .tile:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .tile-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
-  .tile h2 { margin: 0; font-size: 1.05rem; line-height: 1.3; }
-  .tile p { margin: 0; color: var(--muted); font-size: 0.9rem;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .tile .meta { margin-top: auto; padding-top: 6px; }
+  button { font: inherit; color: inherit; }
+  img { -webkit-user-drag: none; }
 
   /* Cover und Platzhalter */
   .cover {
+    display: block;
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
-    display: block;
-    background: var(--placeholder-b);
+    border-radius: calc(var(--radius) - 8px);
+    background: #ffe7a8;
   }
   .placeholder {
     background:
-      radial-gradient(circle at 50% 42%, var(--placeholder-b) 0 18%, transparent 19%),
-      radial-gradient(circle at 50% 42%, var(--placeholder-a) 0 30%, transparent 31%),
-      linear-gradient(135deg, var(--placeholder-b), var(--placeholder-a));
+      radial-gradient(circle at 50% 45%, #fff 0 14%, transparent 15%),
+      radial-gradient(circle at 50% 45%, var(--yellow) 0 30%, transparent 31%),
+      linear-gradient(135deg, #ffe7a8, #ffc0d6);
+  }
+
+  /* Startseite: Kacheln */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    padding: 20px 0 32px;
+  }
+  .tile {
+    border: 0;
+    border-radius: var(--radius);
+    padding: 12px 12px 16px;
+    background: var(--tile, var(--c1));
+    color: var(--white);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    text-align: center;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .tile:hover { transform: translateY(-3px) rotate(-.5deg); }
+  .tile:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(43, 33, 71, .18); }
+  .tile:focus-visible, .episode:focus-visible, .round:focus-visible, .back:focus-visible {
+    outline: 4px solid var(--purple-dark);
+    outline-offset: 3px;
+  }
+  .tile h2 {
+    margin: 12px 4px 0;
+    font-size: 1.25rem;
+    line-height: 1.2;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
 
   /* Detailansicht */
+  .detail-head { display: flex; align-items: center; gap: 14px; margin: 16px 0 8px; }
   .back {
-    font: inherit;
-    margin: 16px 0;
-    padding: 8px 14px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--card);
-    color: var(--text);
+    flex: none;
+    width: 56px; height: 56px;
+    border: 0; border-radius: 50%;
+    background: var(--white);
+    color: var(--purple);
+    font-size: 1.8rem; font-weight: 700;
+    box-shadow: var(--shadow);
     cursor: pointer;
   }
-  .back:hover { border-color: var(--accent); }
-  .podcast-head { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 24px; }
-  .podcast-head .cover { width: 180px; flex: none; border-radius: var(--radius); }
-  .podcast-head h2 { margin: 0 0 8px; font-size: 1.5rem; line-height: 1.25; }
-  .podcast-head p { margin: 0 0 8px; }
-  .episodes { list-style: none; margin: 0 0 40px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .back:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(43, 33, 71, .18); }
+  .detail-head .cover { width: 64px; flex: none; border-radius: 16px; }
+  .detail-head h2 { margin: 0; font-size: 1.5rem; line-height: 1.2; }
+
+  .episodes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 16px;
+    list-style: none;
+    margin: 12px 0 0; padding: 0;
+  }
   .episode {
-    background: var(--card);
-    border: 1px solid var(--line);
+    position: relative;
+    width: 100%;
+    border: 0;
     border-radius: var(--radius);
-    padding: 14px 16px;
-    display: flex;
-    gap: 14px;
+    padding: 8px 8px 12px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    text-align: center;
+    transition: transform .12s;
   }
-  .episode .cover { width: 72px; flex: none; border-radius: 8px; }
-  .episode-body { flex: 1; min-width: 0; }
-  .episode h3 { margin: 0 0 2px; font-size: 1.05rem; line-height: 1.3; }
-  .episode p { margin: 8px 0; overflow-wrap: anywhere; }
-  .episode audio { width: 100%; margin-top: 6px; }
+  .episode:active { transform: translateY(3px); }
+  .episode .thumb { position: relative; }
+  .episode .badge {
+    position: absolute; right: 8px; bottom: 8px;
+    width: 52px; height: 52px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--yellow); color: var(--ink);
+    border: 3px solid var(--white);
+    box-shadow: 0 3px 0 rgba(43, 33, 71, .25);
+  }
+  .episode .badge svg { width: 26px; height: 26px; }
+  .episode h3 {
+    margin: 10px 4px 0;
+    font-size: 1rem;
+    line-height: 1.25;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .episode.active { background: var(--yellow); box-shadow: 0 0 0 4px var(--purple), var(--shadow); }
+  .episode.active .badge { background: var(--purple); color: var(--white); }
+
+  /* Großer Player, unten fixiert */
+  .player {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 10;
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+    background: var(--purple);
+    color: var(--white);
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -6px 24px rgba(43, 33, 71, .25);
+  }
+  .player-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 16px; }
+  .player .cover { width: 96px; flex: none; border-radius: 18px; }
+  .player-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+  .player-title {
+    margin: 0; font-size: 1.15rem; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .controls { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .round {
+    border: 0; border-radius: 50%;
+    display: grid; place-items: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, .18);
+    color: var(--white);
+    width: 60px; height: 60px;
+  }
+  .round svg { width: 30px; height: 30px; }
+  .round:active { transform: scale(.94); }
+  .round.play {
+    width: 84px; height: 84px;
+    background: var(--yellow); color: var(--ink);
+    box-shadow: 0 5px 0 rgba(0, 0, 0, .25);
+  }
+  .round.play svg { width: 42px; height: 42px; }
+  .round.play:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, .25); }
+
+  .seek {
+    --p: 0%;
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 14px; margin: 0;
+    border-radius: 7px;
+    background: linear-gradient(to right, var(--yellow) var(--p), rgba(255, 255, 255, .3) var(--p));
+    cursor: pointer;
+  }
+  .seek::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--white); border: 4px solid var(--yellow);
+  }
+  .seek::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--white); border: 4px solid var(--yellow);
+  }
+  .player-error { margin: 0; font-weight: 700; color: var(--yellow); }
+
   .notice {
-    background: var(--card);
-    border: 1px solid var(--line);
+    background: var(--white);
     border-radius: var(--radius);
-    padding: 16px;
-    margin: 16px 0;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin: 20px 0;
+    font-size: 1.1rem;
   }
-  code { background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+  .notice p { margin: 8px 0 0; font-size: 1rem; }
 
   @media (max-width: 600px) {
-    .grid { grid-template-columns: 1fr; }
-    .podcast-head { flex-direction: column; }
-    .podcast-head .cover { width: 140px; }
-    .episode { flex-direction: column; }
-    .episode .cover { display: none; }
+    h1 { font-size: 1.7rem; }
+    .grid { grid-template-columns: 1fr; gap: 16px; }
+    .tile { display: flex; align-items: center; gap: 14px; text-align: left; padding: 10px; }
+    .tile .cover { width: 96px; flex: none; }
+    .tile h2 { margin: 0; font-size: 1.3rem; }
+    .episodes { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .episode .badge { width: 44px; height: 44px; }
+    .player-inner { flex-direction: column; gap: 10px; }
+    .player .cover { display: none; }
+    .player-main { width: 100%; }
+    .player-title { text-align: center; }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Podcast-Übersicht</h1>
-  <div class="meta" id="status">Daten werden geladen …</div>
+  <h1>🎧 Podcasts</h1>
 </header>
 
 <main>
@@ -148,30 +240,64 @@
     <div class="grid" id="grid"></div>
   </section>
 
-  <section id="detail" hidden aria-live="polite">
-    <button type="button" class="back" id="back">← Zurück zur Übersicht</button>
-    <div id="detail-content"></div>
+  <section id="detail" hidden>
+    <div class="detail-head">
+      <button type="button" class="back" id="back" aria-label="Zurück zur Übersicht">←</button>
+      <div id="detail-cover"></div>
+      <h2 id="detail-title"></h2>
+    </div>
+    <ul class="episodes" id="episodes"></ul>
   </section>
 </main>
+
+<div class="player" id="player" hidden aria-label="Player">
+  <div class="player-inner">
+    <div id="player-cover"></div>
+    <div class="player-main">
+      <p class="player-title" id="player-title"></p>
+      <p class="player-error" id="player-error" hidden>Diese Folge kann gerade nicht abgespielt werden.</p>
+      <div class="controls">
+        <button type="button" class="round" id="rewind" aria-label="15 Sekunden zurück">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        </button>
+        <button type="button" class="round play" id="toggle" aria-label="Abspielen">
+          <svg viewBox="0 0 24 24" fill="currentColor" id="icon-play"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" id="icon-pause" hidden><rect x="6" y="4.5" width="4.5" height="15" rx="1.5"/><rect x="13.5" y="4.5" width="4.5" height="15" rx="1.5"/></svg>
+        </button>
+        <button type="button" class="round" id="forward" aria-label="15 Sekunden vor">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+        </button>
+      </div>
+      <input type="range" class="seek" id="seek" min="0" max="1000" value="0" aria-label="Position in der Folge">
+    </div>
+  </div>
+  <audio id="audio" preload="none"></audio>
+</div>
 
 <script>
 (function () {
   "use strict";
 
-  const statusEl = document.getElementById("status");
-  const gridEl = document.getElementById("grid");
-  const overviewEl = document.getElementById("overview");
-  const detailEl = document.getElementById("detail");
-  const detailContentEl = document.getElementById("detail-content");
-  const backBtn = document.getElementById("back");
+  const TILE_COLORS = ["--c1", "--c2", "--c3", "--c4", "--c5", "--c6"];
+  const PLAY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>';
+  const PAUSE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4.5" width="4.5" height="15" rx="1.5"/><rect x="13.5" y="4.5" width="4.5" height="15" rx="1.5"/></svg>';
+
+  const $ = function (id) { return document.getElementById(id); };
+  const gridEl = $("grid");
+  const overviewEl = $("overview");
+  const detailEl = $("detail");
+  const episodesEl = $("episodes");
+  const playerEl = $("player");
+  const audio = $("audio");
+  const toggleBtn = $("toggle");
+  const seekEl = $("seek");
 
   let podcasts = [];
   let lastTile = null;
+  let current = null; // { podcastIndex, episodeIndex }
+  let seeking = false;
 
-  const dateFmt = new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const dateTimeFmt = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" });
-
-  // Hilfsfunktion: Element mit Klasse und reinem Text erzeugen (kein innerHTML)
+  // Element mit reinem Text erzeugen (Feed-Inhalte nie als HTML einfügen)
   function el(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -179,7 +305,7 @@
     return node;
   }
 
-  // Nur http(s)-Adressen zulassen, alles andere (z. B. javascript:) verwerfen
+  // Nur http(s)-Adressen zulassen
   function safeUrl(value) {
     if (typeof value !== "string" || !value) return null;
     try {
@@ -190,70 +316,37 @@
     }
   }
 
-  function formatDate(iso, withTime) {
-    if (!iso) return null;
-    const d = new Date(iso);
-    if (isNaN(d)) return null;
-    return (withTime ? dateTimeFmt : dateFmt).format(d);
-  }
-
-  function externalLink(href, text) {
-    const a = el("a", null, text);
-    a.href = href;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    return a;
-  }
-
-  // Cover-Bild oder neutraler CSS-Platzhalter
-  function cover(src, alt) {
+  function cover(src) {
     const url = safeUrl(src);
     if (!url) {
       const ph = el("div", "cover placeholder");
-      ph.setAttribute("role", "img");
-      ph.setAttribute("aria-label", "Kein Cover vorhanden");
+      ph.setAttribute("aria-hidden", "true");
       return ph;
     }
     const img = el("img", "cover");
     img.src = url;
-    img.alt = alt || "";
+    img.alt = "";
     img.loading = "lazy";
     img.decoding = "async";
     img.referrerPolicy = "no-referrer";
-    img.addEventListener("error", function () {
-      img.replaceWith(cover(null));
-    }, { once: true });
+    img.addEventListener("error", function () { img.replaceWith(cover(null)); }, { once: true });
     return img;
   }
 
-  function countEpisodes(p) {
-    return typeof p.episode_count === "number" ? p.episode_count : (p.episodes || []).length;
+  // Bild der Folge, sonst das Cover des Podcasts
+  function episodeImage(p, ep) {
+    return safeUrl(ep.image) || safeUrl(p.image);
   }
 
-  function folgenText(n) {
-    return n === 1 ? "1 Folge" : n + " Folgen";
-  }
+  /* ---------- Startseite ---------- */
 
   function renderOverview() {
     gridEl.replaceChildren();
     podcasts.forEach(function (p, index) {
       const tile = el("button", "tile");
       tile.type = "button";
-      tile.setAttribute("aria-label", (p.title || "Podcast") + " – Folgen anzeigen");
-
-      tile.append(cover(p.image, ""));
-
-      const body = el("div", "tile-body");
-      body.append(el("h2", null, p.title || "Ohne Titel"));
-      if (p.description) body.append(el("p", null, p.description));
-
-      const episodes = p.episodes || [];
-      const latest = episodes.length ? formatDate(episodes[0].published) : null;
-      let meta = folgenText(countEpisodes(p));
-      if (latest) meta += " · letzte Folge: " + latest;
-      body.append(el("div", "meta", meta));
-
-      tile.append(body);
+      tile.style.setProperty("--tile", "var(" + TILE_COLORS[index % TILE_COLORS.length] + ")");
+      tile.append(cover(p.image), el("h2", null, p.title || "Podcast"));
       tile.addEventListener("click", function () {
         lastTile = tile;
         location.hash = "podcast-" + index;
@@ -262,101 +355,177 @@
     });
   }
 
-  function renderDetail(p) {
-    detailContentEl.replaceChildren();
+  /* ---------- Detailansicht ---------- */
 
-    const head = el("div", "podcast-head");
-    head.append(cover(p.image, "Cover von " + (p.title || "Podcast")));
-    const info = el("div");
-    info.append(el("h2", null, p.title || "Ohne Titel"));
-    if (p.description) info.append(el("p", null, p.description));
-    const meta = el("div", "meta");
-    meta.append(document.createTextNode(folgenText(countEpisodes(p))));
-    const updated = formatDate(p.last_updated, true);
-    if (updated) meta.append(document.createTextNode(" · abgerufen am " + updated));
-    const site = safeUrl(p.link);
-    if (site) {
-      meta.append(document.createTextNode(" · "));
-      meta.append(externalLink(site, "Webseite"));
-    }
-    info.append(meta);
-    head.append(info);
-    detailContentEl.append(head);
+  function renderDetail(index) {
+    const p = podcasts[index];
+    $("detail-cover").replaceChildren(cover(p.image));
+    $("detail-title").textContent = p.title || "Podcast";
 
-    const episodes = (p.episodes || []).slice(0, 20);
-    if (!episodes.length) {
-      detailContentEl.append(el("div", "notice", "Für diesen Podcast sind keine Folgen vorhanden."));
-      return;
-    }
+    episodesEl.replaceChildren();
+    (p.episodes || []).slice(0, 20).forEach(function (ep, i) {
+      if (!safeUrl(ep.audio_url)) return;
+      const li = el("li");
+      const card = el("button", "episode");
+      card.type = "button";
+      card.dataset.podcast = index;
+      card.dataset.episode = i;
 
-    const heading = el("h3", null, "Neueste Folgen");
-    heading.style.margin = "0 0 12px";
-    detailContentEl.append(heading);
+      const thumb = el("div", "thumb");
+      thumb.append(cover(episodeImage(p, ep)));
+      const badge = el("span", "badge");
+      badge.setAttribute("aria-hidden", "true");
+      thumb.append(badge);
 
-    const list = el("ul", "episodes");
-    episodes.forEach(function (ep) {
-      const item = el("li", "episode");
-      if (ep.image) item.append(cover(ep.image, ""));
-
-      const body = el("div", "episode-body");
-      body.append(el("h3", null, ep.title || "Ohne Titel"));
-
-      const parts = [];
-      const date = formatDate(ep.published);
-      if (date) parts.push(date);
-      if (ep.duration) parts.push("Dauer: " + ep.duration);
-      if (parts.length) body.append(el("div", "meta", parts.join(" · ")));
-
-      if (ep.summary) body.append(el("p", null, ep.summary));
-
-      const audio = safeUrl(ep.audio_url);
-      if (audio) {
-        const player = document.createElement("audio");
-        player.controls = true;
-        player.preload = "none";
-        player.src = audio;
-        player.textContent = "Ihr Browser unterstützt keine Audio-Wiedergabe.";
-        body.append(player);
-      }
-
-      const link = safeUrl(ep.link);
-      if (link) {
-        const linkLine = el("div", "meta");
-        linkLine.append(externalLink(link, "Zur Folge"));
-        body.append(linkLine);
-      }
-
-      item.append(body);
-      list.append(item);
+      card.append(thumb, el("h3", null, ep.title || "Folge"));
+      card.addEventListener("click", function () { playEpisode(index, i); });
+      li.append(card);
+      episodesEl.append(li);
     });
-    detailContentEl.append(list);
+
+    if (!episodesEl.children.length) {
+      episodesEl.append(el("li", "notice", "Hier gibt es noch keine Folgen."));
+    }
+    updateCards();
   }
 
-  // Ansicht anhand des URL-Fragments wählen (#podcast-3), damit der Zurück-Button des Browsers funktioniert
+  /* ---------- Player ---------- */
+
+  function isCurrent(pi, ei) {
+    return current && current.podcastIndex === pi && current.episodeIndex === ei;
+  }
+
+  function playEpisode(pi, ei) {
+    if (isCurrent(pi, ei)) {
+      togglePlay();
+      return;
+    }
+    const p = podcasts[pi];
+    const ep = p.episodes[ei];
+    current = { podcastIndex: pi, episodeIndex: ei };
+
+    $("player-cover").replaceChildren(cover(episodeImage(p, ep)));
+    $("player-title").textContent = ep.title || "Folge";
+    $("player-error").hidden = true;
+    playerEl.hidden = false;
+    updatePlayerHeight();
+
+    audio.src = safeUrl(ep.audio_url);
+    setProgress(0);
+    audio.play().catch(function () { /* z. B. Autoplay blockiert – Nutzer tippt auf Play */ });
+
+    if ("mediaSession" in navigator) {
+      const art = episodeImage(p, ep);
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: ep.title || "Folge",
+        artist: p.title || "",
+        artwork: art ? [{ src: art, sizes: "512x512" }] : []
+      });
+    }
+    updateCards();
+  }
+
+  function togglePlay() {
+    if (!audio.src) return;
+    if (audio.paused) {
+      audio.play().catch(function () {});
+    } else {
+      audio.pause();
+    }
+  }
+
+  function skip(seconds) {
+    if (!audio.src || !isFinite(audio.duration)) return;
+    audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + seconds));
+  }
+
+  function setProgress(fraction) {
+    const value = Math.round(fraction * 1000);
+    seekEl.value = value;
+    seekEl.style.setProperty("--p", (value / 10) + "%");
+  }
+
+  function updatePlayButton() {
+    const playing = !audio.paused && !audio.ended;
+    $("icon-play").toggleAttribute("hidden", playing);
+    $("icon-pause").toggleAttribute("hidden", !playing);
+    toggleBtn.setAttribute("aria-label", playing ? "Pause" : "Abspielen");
+    updateCards();
+  }
+
+  // Aktive Folge hervorheben und Symbol auf der Karte anpassen
+  function updateCards() {
+    const playing = !audio.paused && !audio.ended;
+    episodesEl.querySelectorAll(".episode").forEach(function (card) {
+      const active = isCurrent(Number(card.dataset.podcast), Number(card.dataset.episode));
+      card.classList.toggle("active", active);
+      card.setAttribute("aria-label",
+        (active && playing ? "Pause: " : "Abspielen: ") + card.querySelector("h3").textContent);
+      // Nur feste, eigene SVG-Symbole – keine Feed-Inhalte
+      card.querySelector(".badge").innerHTML = active && playing ? PAUSE_SVG : PLAY_SVG;
+    });
+  }
+
+  function updatePlayerHeight() {
+    const h = playerEl.hidden ? 0 : playerEl.offsetHeight;
+    document.documentElement.style.setProperty("--player-h", h + "px");
+  }
+
+  toggleBtn.addEventListener("click", togglePlay);
+  $("rewind").addEventListener("click", function () { skip(-15); });
+  $("forward").addEventListener("click", function () { skip(15); });
+
+  audio.addEventListener("play", updatePlayButton);
+  audio.addEventListener("pause", updatePlayButton);
+  audio.addEventListener("ended", updatePlayButton);
+  audio.addEventListener("timeupdate", function () {
+    if (!seeking && audio.duration) setProgress(audio.currentTime / audio.duration);
+  });
+  audio.addEventListener("error", function () {
+    if (audio.getAttribute("src")) $("player-error").hidden = false;
+    updatePlayButton();
+  });
+
+  seekEl.addEventListener("input", function () {
+    seeking = true;
+    seekEl.style.setProperty("--p", (seekEl.value / 10) + "%");
+  });
+  seekEl.addEventListener("change", function () {
+    if (isFinite(audio.duration)) audio.currentTime = (seekEl.value / 1000) * audio.duration;
+    seeking = false;
+  });
+
+  if ("mediaSession" in navigator) {
+    navigator.mediaSession.setActionHandler("play", togglePlay);
+    navigator.mediaSession.setActionHandler("pause", togglePlay);
+    navigator.mediaSession.setActionHandler("seekbackward", function () { skip(-15); });
+    navigator.mediaSession.setActionHandler("seekforward", function () { skip(15); });
+  }
+  window.addEventListener("resize", updatePlayerHeight);
+
+  /* ---------- Navigation ---------- */
+
+  // Ansicht über das URL-Fragment (#podcast-3), damit der Zurück-Button des Browsers funktioniert
   function route() {
     const match = /^#podcast-(\d+)$/.exec(location.hash);
-    const p = match ? podcasts[Number(match[1])] : null;
+    const index = match ? Number(match[1]) : -1;
 
-    // Laufende Wiedergabe beim Verlassen der Detailansicht stoppen
-    detailEl.querySelectorAll("audio").forEach(function (a) { a.pause(); });
-
-    if (p) {
-      renderDetail(p);
+    if (podcasts[index]) {
+      renderDetail(index);
       overviewEl.hidden = true;
       detailEl.hidden = false;
-      document.title = (p.title || "Podcast") + " – Podcast-Übersicht";
+      document.title = (podcasts[index].title || "Podcast") + " – Podcasts";
       window.scrollTo(0, 0);
-      backBtn.focus({ preventScroll: true });
+      $("back").focus({ preventScroll: true });
     } else {
       detailEl.hidden = true;
       overviewEl.hidden = false;
-      detailContentEl.replaceChildren();
-      document.title = "Podcast-Übersicht";
+      document.title = "Podcasts";
       if (lastTile) lastTile.focus();
     }
   }
 
-  backBtn.addEventListener("click", function () {
+  $("back").addEventListener("click", function () {
     if (history.length > 1 && /^#podcast-/.test(location.hash)) {
       history.back();
     } else {
@@ -366,9 +535,7 @@
   window.addEventListener("hashchange", route);
 
   function showError(message, hint) {
-    statusEl.textContent = message;
-    const box = el("div", "notice");
-    box.append(el("strong", null, message));
+    const box = el("div", "notice", message);
     if (hint) box.append(el("p", null, hint));
     gridEl.replaceWith(box);
   }
@@ -381,22 +548,19 @@
     .then(function (data) {
       podcasts = Array.isArray(data && data.podcasts) ? data.podcasts : [];
       if (!podcasts.length) {
-        showError("Noch keine Podcasts vorhanden.",
-          "Bitte Feed-Adressen in feeds.txt eintragen und „python update_feeds.py“ ausführen.");
+        showError("Noch keine Podcasts da.",
+          "Feed-Adressen in feeds.txt eintragen und „python update_feeds.py“ ausführen.");
         return;
       }
-      const generated = formatDate(data.generated, true);
-      statusEl.textContent = podcasts.length + (podcasts.length === 1 ? " Podcast" : " Podcasts") +
-        (generated ? " · Stand: " + generated : "");
       renderOverview();
       route();
     })
     .catch(function () {
       if (location.protocol === "file:") {
-        showError("Die Daten können nicht direkt aus der Datei geladen werden.",
-          "Bitte im Projektordner „python -m http.server“ starten und http://localhost:8000 öffnen.");
+        showError("Bitte über einen Webserver öffnen.",
+          "Im Projektordner „python -m http.server“ starten und http://localhost:8000 öffnen.");
       } else {
-        showError("Die Datei data/podcasts.json konnte nicht geladen werden.",
+        showError("Die Podcasts konnten nicht geladen werden.",
           "Bitte zuerst „python update_feeds.py“ ausführen.");
       }
     });
