@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://open.spotify.com https://open.spotifycdn.com; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:; frame-src https://open.spotify.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://open.spotify.com https://open.spotifycdn.com; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:; frame-src https://open.spotify.com; connect-src 'self' https://accounts.spotify.com https://api.spotify.com">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#fff4d6">
 <title>SpotiMy</title>
@@ -293,6 +293,25 @@
     border-radius: 20px 20px 0 0;
     box-shadow: 0 -6px 24px rgba(43, 33, 71, .25);
   }
+  .spotify-login {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    margin: 12px 0 4px;
+    padding: 14px 18px;
+    border: 0; border-radius: var(--radius);
+    background: #1db954; color: #08260f;
+    font: inherit; font-size: 1.05rem; font-weight: 700;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .spotify-login:active { transform: translateY(3px); }
+  .spotify-logout {
+    display: block; margin: 4px 0 0 auto;
+    border: 0; background: none; padding: 6px 4px;
+    color: var(--purple); font: inherit; font-size: .9rem; font-weight: 700;
+    text-decoration: underline; cursor: pointer;
+  }
+  .player-error a { color: var(--white); }
   .tile .tag {
     display: inline-block;
     margin-top: 6px;
@@ -408,6 +427,9 @@
   let spotifyCurrent = null; // im Spotify-Player geöffnete Folge { pi, ei }
   let pendingSpotify = null; // aus der Suche gewählte Spotify-Folge
   let spotifyUsed = false; // in dieser Detailansicht wurde ein Spotify-Player geladen
+  let spotifyClientId = null; // aus data/podcasts.json, für den Spotify-Login
+  let remote = null; // Spotify-Fernsteuerung: läuft gerade eine Folge über die Spotify-App?
+  let openedFromOverview = false; // Detailansicht per Kachel geöffnet -> Zurück = history.back()
   let seeking = false;
 
   // Element mit reinem Text erzeugen (Feed-Inhalte nie als HTML einfügen)
@@ -465,6 +487,7 @@
       tile.append(cover(p.image), name);
       tile.addEventListener("click", function () {
         lastTile = tile;
+        openedFromOverview = true;
         location.hash = "podcast-" + index;
       });
       gridEl.append(tile);
@@ -496,6 +519,7 @@
     }
     card.addEventListener("click", function () {
       if (safeUrl(ep.audio_url)) playEpisode(pi, ei);
+      else if (spotifyLoggedIn()) remotePlay(pi, ei);
       else openSpotifyEpisode(pi, ei);
     });
     li.append(card);
@@ -579,6 +603,8 @@
 
     episodesEl.replaceChildren();
     removeSpotify();
+    const oldAuth = $("spotify-auth");
+    if (oldAuth) oldAuth.remove();
 
     (p.episodes || []).slice(0, 20).forEach(function (ep, i) {
       if (isPlayable(ep)) episodesEl.append(episodeCard(index, i, false));
@@ -596,8 +622,25 @@
       episodesEl.append(el("li", "notice", "Hier gibt es noch keine Folgen."));
     }
 
+    // Spotify-Login anbieten: dann laufen ganze Folgen über SpotiMy
+    if (p.type === "spotify" && spotifyClientId) {
+      if (spotifyLoggedIn()) {
+        const out = el("button", "spotify-logout", "Spotify abmelden");
+        out.type = "button";
+        out.addEventListener("click", function () { spotifyLogout(); renderDetail(index); });
+        episodesEl.before(out);
+        out.id = "spotify-auth";
+      } else {
+        const login = el("button", "spotify-login", "🔑 Mit Spotify anmelden – ganze Folgen in SpotiMy");
+        login.type = "button";
+        login.id = "spotify-auth";
+        login.addEventListener("click", function () { spotifyLogin(); });
+        episodesEl.before(login);
+      }
+    }
+
     // Spotify-Steuerung schon vorladen, damit die Folge beim Antippen sofort startet
-    if (p.type === "spotify") {
+    if (p.type === "spotify" && !spotifyLoggedIn()) {
       const pending = pendingSpotify && pendingSpotify.pi === index ? pendingSpotify : null;
       pendingSpotify = null;
       loadSpotifyApi()
@@ -745,6 +788,7 @@
     // Aus der Suche: erst zur Detailansicht des Podcasts wechseln
     if (location.hash !== "#podcast-" + pi) {
       pendingSpotify = { pi: pi, ei: ei };
+      openedFromOverview = true;
       location.hash = "podcast-" + pi;
       return;
     }
@@ -784,10 +828,11 @@
   }
 
   function playEpisode(pi, ei) {
-    if (isCurrent(pi, ei)) {
+    if (isCurrent(pi, ei) && !remote) {
       togglePlay();
       return;
     }
+    stopRemote();
     const p = podcasts[pi];
     const ep = p.episodes[ei];
     current = { podcastIndex: pi, episodeIndex: ei };
@@ -814,7 +859,12 @@
     updateCards();
   }
 
+  function isPlaying() {
+    return remote ? remote.playing : !audio.paused && !audio.ended;
+  }
+
   function togglePlay() {
+    if (remote) { remoteToggle(); return; }
     if (!audio.src) return;
     if (audio.paused) {
       audio.play().catch(function () {});
@@ -824,6 +874,7 @@
   }
 
   function skip(seconds) {
+    if (remote) { remoteSeek(remotePosition() + seconds); return; }
     if (!audio.src || !isFinite(audio.duration)) return;
     audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + seconds));
   }
@@ -845,16 +896,20 @@
 
   // Links die vergangene Zeit, rechts die Restzeit
   function updateTimes(position) {
-    const duration = audio.duration;
-    const pos = position != null ? position : audio.currentTime || 0;
+    const duration = currentDuration();
+    const pos = position != null ? position : remote ? remotePosition() : audio.currentTime || 0;
     $("time-elapsed").textContent = formatTime(pos);
     $("time-remaining").textContent = isFinite(duration) && duration > 0
       ? "-" + formatTime(Math.max(0, duration - pos))
       : "–:––";
   }
 
+  function currentDuration() {
+    return remote ? (remote.durationMs ? remote.durationMs / 1000 : NaN) : audio.duration;
+  }
+
   function updatePlayButton() {
-    const playing = !audio.paused && !audio.ended;
+    const playing = isPlaying();
     $("icon-play").toggleAttribute("hidden", playing);
     $("icon-pause").toggleAttribute("hidden", !playing);
     toggleBtn.setAttribute("aria-label", playing ? "Pause" : "Abspielen");
@@ -863,7 +918,7 @@
 
   // Aktive Folge hervorheben und Symbol auf der Karte anpassen
   function updateCards() {
-    const playing = !audio.paused && !audio.ended;
+    const playing = isPlaying();
     document.querySelectorAll(".episode").forEach(function (card) {
       const pi = Number(card.dataset.podcast);
       const ei = Number(card.dataset.episode);
@@ -892,14 +947,14 @@
   audio.addEventListener("pause", updatePlayButton);
   audio.addEventListener("ended", updatePlayButton);
   audio.addEventListener("timeupdate", function () {
-    if (seeking) return;
+    if (seeking || remote) return;
     if (audio.duration) setProgress(audio.currentTime / audio.duration);
     updateTimes();
   });
   audio.addEventListener("loadedmetadata", function () { updateTimes(); });
   audio.addEventListener("durationchange", function () { updateTimes(); });
   audio.addEventListener("error", function () {
-    if (audio.getAttribute("src")) $("player-error").hidden = false;
+    if (audio.getAttribute("src") && !remote) showPlayerError("Diese Folge kann gerade nicht abgespielt werden.");
     updatePlayButton();
   });
 
@@ -907,10 +962,11 @@
     seeking = true;
     seekEl.style.setProperty("--p", (seekEl.value / 10) + "%");
     // Beim Ziehen schon die Zielzeit anzeigen
-    if (isFinite(audio.duration)) updateTimes((seekEl.value / 1000) * audio.duration);
+    if (isFinite(currentDuration())) updateTimes((seekEl.value / 1000) * currentDuration());
   });
   seekEl.addEventListener("change", function () {
-    if (isFinite(audio.duration)) audio.currentTime = (seekEl.value / 1000) * audio.duration;
+    if (remote) remoteSeek((seekEl.value / 1000) * currentDuration());
+    else if (isFinite(audio.duration)) audio.currentTime = (seekEl.value / 1000) * audio.duration;
     seeking = false;
     updateTimes();
   });
@@ -922,6 +978,344 @@
     navigator.mediaSession.setActionHandler("seekforward", function () { skip(15); });
   }
   window.addEventListener("resize", updatePlayerHeight);
+
+  function showPlayerError(message, linkText, linkHref) {
+    const box = $("player-error");
+    box.replaceChildren(document.createTextNode(message));
+    if (linkText && linkHref) {
+      box.append(" ");
+      const a = el("a", null, linkText);
+      a.href = linkHref;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      box.append(a);
+    }
+    box.hidden = false;
+    updatePlayerHeight();
+  }
+
+  /* ---------- Spotify-Login (Authorization Code mit PKCE, ohne Secret) ---------- */
+
+  const SPOTIFY_SCOPES = "user-read-playback-state user-modify-playback-state";
+  const TOKEN_KEY = "spotimy-spotify";
+  const LOGIN_KEY = "spotimy-spotify-login";
+
+  // Speicher kann im privaten Modus fehlen – dann eben ohne Login
+  function store(kind, key, value) {
+    try {
+      const s = kind === "local" ? localStorage : sessionStorage;
+      if (value === undefined) return JSON.parse(s.getItem(key) || "null");
+      if (value === null) s.removeItem(key);
+      else s.setItem(key, JSON.stringify(value));
+    } catch (e) { return null; }
+    return null;
+  }
+
+  function redirectUri() {
+    return location.origin + location.pathname.replace(/index\.html$/, "");
+  }
+
+  function spotifyLoggedIn() {
+    const t = store("local", TOKEN_KEY);
+    return Boolean(spotifyClientId && t && t.refresh && t.clientId === spotifyClientId);
+  }
+
+  function spotifyLogout() {
+    stopRemote();
+    store("local", TOKEN_KEY, null);
+  }
+
+  function base64url(bytes) {
+    let str = "";
+    bytes.forEach(function (b) { str += String.fromCharCode(b); });
+    return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  async function spotifyLogin(pending) {
+    const verifier = base64url(crypto.getRandomValues(new Uint8Array(48)));
+    const state = base64url(crypto.getRandomValues(new Uint8Array(12)));
+    const challenge = base64url(new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))));
+    store("session", LOGIN_KEY, { verifier: verifier, state: state, hash: location.hash, pending: pending || null });
+    location.assign("https://accounts.spotify.com/authorize?" + new URLSearchParams({
+      client_id: spotifyClientId,
+      response_type: "code",
+      redirect_uri: redirectUri(),
+      code_challenge_method: "S256",
+      code_challenge: challenge,
+      scope: SPOTIFY_SCOPES,
+      state: state
+    }));
+  }
+
+  async function tokenRequest(params) {
+    const res = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(Object.assign({ client_id: spotifyClientId }, params))
+    });
+    const data = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(data.error_description || data.error || "Anmeldung fehlgeschlagen");
+    const old = store("local", TOKEN_KEY) || {};
+    const token = {
+      clientId: spotifyClientId,
+      access: data.access_token,
+      refresh: data.refresh_token || old.refresh,
+      expires: Date.now() + (data.expires_in || 3600) * 1000
+    };
+    store("local", TOKEN_KEY, token);
+    return token;
+  }
+
+  // Rückkehr vom Spotify-Login: Code gegen Token tauschen, Adresse aufräumen
+  async function handleSpotifyRedirect() {
+    const params = new URLSearchParams(location.search);
+    if (!params.has("code") && !params.has("error")) return null;
+    const login = store("session", LOGIN_KEY) || {};
+    store("session", LOGIN_KEY, null);
+    history.replaceState(null, "", location.pathname + (login.hash || ""));
+    if (params.get("error") || !login.verifier || params.get("state") !== login.state) {
+      return { error: "Spotify-Anmeldung abgebrochen." };
+    }
+    try {
+      await tokenRequest({
+        grant_type: "authorization_code",
+        code: params.get("code"),
+        redirect_uri: redirectUri(),
+        code_verifier: login.verifier
+      });
+      return { pending: login.pending };
+    } catch (e) {
+      return { error: "Spotify-Anmeldung fehlgeschlagen: " + e.message };
+    }
+  }
+
+  async function accessToken() {
+    const t = store("local", TOKEN_KEY);
+    if (!t || !t.refresh) return null;
+    if (t.access && t.expires - Date.now() > 60000) return t.access;
+    try {
+      return (await tokenRequest({ grant_type: "refresh_token", refresh_token: t.refresh })).access;
+    } catch (e) {
+      store("local", TOKEN_KEY, null);
+      return null;
+    }
+  }
+
+  async function spotifyWebApi(method, path, body) {
+    const token = await accessToken();
+    if (!token) throw { login: true, message: "Bitte erneut bei Spotify anmelden." };
+    const res = await fetch("https://api.spotify.com/v1" + path, {
+      method: method,
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (res.status === 401) {
+      store("local", TOKEN_KEY, null);
+      throw { login: true, message: "Bitte erneut bei Spotify anmelden." };
+    }
+    if (res.status === 204 || res.status === 202) return null;
+    const data = await res.json().catch(function () { return null; });
+    if (!res.ok) {
+      const err = (data && data.error) || {};
+      throw { status: res.status, reason: err.reason, message: err.message || ("Fehler " + res.status) };
+    }
+    return data;
+  }
+
+  /* ---------- Spotify-Fernsteuerung: Ton kommt aus der Spotify-App ---------- */
+
+  let remoteTimer = null;
+  let remotePollCount = 0;
+
+  function spotifyAlbumUri(ep) {
+    const embed = spotifyEmbedUrl(ep.embed_url);
+    return embed ? spotifyUri(embed) : null;
+  }
+
+  function remotePosition() {
+    if (!remote) return 0;
+    const ms = remote.progressMs + (remote.playing ? Date.now() - remote.stamp : 0);
+    return Math.min(ms, remote.durationMs || ms) / 1000;
+  }
+
+  function renderRemote() {
+    if (!remote) return;
+    const ep = podcasts[remote.pi].episodes[remote.ei];
+    $("player-title").textContent = (ep.title || "Folge") +
+      (remote.totalTracks > 1 && remote.trackNo ? " · Teil " + remote.trackNo + "/" + remote.totalTracks : "");
+    const d = currentDuration();
+    if (!seeking) {
+      setProgress(isFinite(d) && d > 0 ? remotePosition() / d : 0);
+      updateTimes();
+    }
+    updatePlayButton();
+  }
+
+  async function remoteDevice() {
+    const data = await spotifyWebApi("GET", "/me/player/devices");
+    const devices = (data && data.devices || []).filter(function (d) { return !d.is_restricted; });
+    return devices.find(function (d) { return d.is_active; }) ||
+      devices.find(function (d) { return d.type === "Smartphone"; }) ||
+      devices[0] || null;
+  }
+
+  function remoteError(e, ep) {
+    if (e && e.login) {
+      showPlayerError(e.message);
+      renderDetailIfOpen();
+    } else if (e && e.noDevice) {
+      showPlayerError("Öffne kurz die Spotify-App und tippe dann nochmal auf die Folge.",
+        "Spotify öffnen", ep.link || "https://open.spotify.com/");
+    } else if (e && e.reason === "PREMIUM_REQUIRED") {
+      showPlayerError("Dafür braucht das Spotify-Konto Premium.");
+    } else {
+      showPlayerError("Spotify: " + ((e && e.message) || "unbekannter Fehler"));
+    }
+  }
+
+  function renderDetailIfOpen() {
+    const m = /^#podcast-(\d+)$/.exec(location.hash);
+    if (m && podcasts[Number(m[1])]) renderDetail(Number(m[1]));
+  }
+
+  async function remotePlay(pi, ei) {
+    const p = podcasts[pi];
+    const ep = p.episodes[ei];
+    const uri = spotifyAlbumUri(ep);
+    if (!uri) return;
+    if (remote && remote.pi === pi && remote.ei === ei) { remoteToggle(); return; }
+
+    audio.pause();
+    removeSpotify();
+    current = { podcastIndex: pi, episodeIndex: ei };
+    remote = { pi: pi, ei: ei, uri: uri, playing: false, progressMs: 0, durationMs: 0,
+               stamp: Date.now(), trackNo: 0, totalTracks: 0, deviceId: null };
+    $("player-cover").replaceChildren(cover(episodeImage(p, ep)));
+    $("player-error").hidden = true;
+    playerEl.hidden = false;
+    renderRemote();
+    updatePlayerHeight();
+    updateCards();
+
+    const mine = remote;
+    try {
+      const device = await remoteDevice();
+      if (!device) throw { noDevice: true };
+      if (remote !== mine) return;
+      mine.deviceId = device.id;
+      await spotifyWebApi("PUT", "/me/player/play?device_id=" + encodeURIComponent(device.id), { context_uri: uri });
+      mine.playing = true;
+      mine.stamp = Date.now();
+      startRemoteTimer();
+      renderRemote();
+      setTimeout(remoteRefresh, 1200);
+    } catch (e) {
+      if (remote === mine) remoteError(e, ep);
+    }
+  }
+
+  async function remoteToggle() {
+    if (!remote) return;
+    const mine = remote;
+    const ep = podcasts[mine.pi].episodes[mine.ei];
+    const query = mine.deviceId ? "?device_id=" + encodeURIComponent(mine.deviceId) : "";
+    try {
+      mine.holdUntil = Date.now() + 2500; // Spotify meldet den neuen Stand mit Verzögerung
+      if (mine.playing) {
+        mine.progressMs = remotePosition() * 1000;
+        mine.playing = false;
+        renderRemote();
+        await spotifyWebApi("PUT", "/me/player/pause" + query);
+      } else {
+        mine.playing = true;
+        mine.stamp = Date.now();
+        renderRemote();
+        await spotifyWebApi("PUT", "/me/player/play" + query);
+        startRemoteTimer();
+      }
+    } catch (e) {
+      if (e && e.status === 404) {
+        // Spotify-App nicht mehr aktiv: Folge neu starten
+        remote = null;
+        remotePlay(mine.pi, mine.ei);
+        return;
+      }
+      remoteError(e, ep);
+      remoteRefresh();
+    }
+  }
+
+  async function remoteSeek(seconds) {
+    if (!remote) return;
+    const ms = Math.max(0, Math.round(seconds * 1000));
+    remote.progressMs = remote.durationMs ? Math.min(ms, remote.durationMs) : ms;
+    remote.stamp = Date.now();
+    remote.holdUntil = Date.now() + 2500;
+    renderRemote();
+    try {
+      await spotifyWebApi("PUT", "/me/player/seek?position_ms=" + remote.progressMs +
+        (remote.deviceId ? "&device_id=" + encodeURIComponent(remote.deviceId) : ""));
+    } catch (e) {
+      remoteError(e, podcasts[remote.pi].episodes[remote.ei]);
+    }
+  }
+
+  // Stand von Spotify holen (Position, Pause, Teil der Folge)
+  async function remoteRefresh() {
+    if (!remote) return;
+    const mine = remote;
+    try {
+      const asked = Date.now();
+      const state = await spotifyWebApi("GET", "/me/player");
+      if (remote !== mine || !state) return;
+      // Antwort ist älter als die letzte Bedienung -> ignorieren
+      if (mine.holdUntil && asked < mine.holdUntil) return;
+      mine.playing = Boolean(state.is_playing);
+      mine.progressMs = state.progress_ms || 0;
+      mine.stamp = Date.now();
+      const item = state.item || {};
+      mine.durationMs = item.duration_ms || 0;
+      mine.trackNo = item.track_number || 0;
+      mine.totalTracks = (item.album && item.album.total_tracks) || 0;
+      if (state.device && state.device.id) mine.deviceId = state.device.id;
+      renderRemote();
+    } catch (e) { /* nächster Versuch beim nächsten Takt */ }
+  }
+
+  function startRemoteTimer() {
+    if (remoteTimer) return;
+    remotePollCount = 0;
+    remoteTimer = setInterval(function () {
+      if (!remote) { stopRemoteTimer(); return; }
+      if (document.hidden) return;
+      renderRemote();
+      if (++remotePollCount % 3 === 0) remoteRefresh();
+    }, 1000);
+  }
+
+  function stopRemoteTimer() {
+    clearInterval(remoteTimer);
+    remoteTimer = null;
+  }
+
+  // Spotify-Wiedergabe beenden, z. B. wenn eine normale Folge gestartet wird
+  function stopRemote() {
+    if (!remote) return;
+    const was = remote;
+    remote = null;
+    stopRemoteTimer();
+    if (was.playing) {
+      spotifyWebApi("PUT", "/me/player/pause" +
+        (was.deviceId ? "?device_id=" + encodeURIComponent(was.deviceId) : "")).catch(function () {});
+    }
+    $("player-title").textContent = "";
+    updatePlayButton();
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && remote) remoteRefresh();
+  });
 
   /* ---------- Navigation ---------- */
 
@@ -940,6 +1334,7 @@
     } else {
       removeSpotify(); // stoppt auch die Spotify-Wiedergabe
       spotifyUsed = false;
+      openedFromOverview = false;
       detailEl.hidden = true;
       overviewEl.hidden = false;
       document.title = "SpotiMy";
@@ -948,15 +1343,13 @@
   }
 
   $("back").addEventListener("click", function () {
-    if (spotifyUsed) {
-      // Der Spotify-Player legt eigene Einträge im Browserverlauf an, history.back()
-      // würde nur darin zurückspringen. Deshalb den Eintrag direkt durch die Übersicht ersetzen.
-      history.replaceState(null, "", location.pathname + location.search);
-      route();
-    } else if (history.length > 1 && /^#podcast-/.test(location.hash)) {
+    if (openedFromOverview && !spotifyUsed) {
       history.back();
     } else {
-      location.hash = "";
+      // Kein passender Eintrag im Verlauf (Seite direkt geöffnet, nach dem Spotify-Login,
+      // oder der Spotify-Player hat eigene Einträge angelegt): direkt zur Übersicht.
+      history.replaceState(null, "", location.pathname + location.search);
+      route();
     }
   });
   window.addEventListener("hashchange", route);
@@ -974,6 +1367,8 @@
     })
     .then(function (data) {
       podcasts = Array.isArray(data && data.podcasts) ? data.podcasts : [];
+      spotifyClientId = typeof data.spotify_client_id === "string" && /^[A-Za-z0-9]+$/.test(data.spotify_client_id)
+        ? data.spotify_client_id : null;
       if (!podcasts.length) {
         showError("Noch keine Podcasts da.",
           "Feed-Adressen in feeds.txt eintragen und „python update_feeds.py“ ausführen.");
@@ -982,7 +1377,15 @@
       renderOverview();
       buildSearchIndex();
       $("search-form").hidden = false;
-      route();
+      return handleSpotifyRedirect().then(function (result) {
+        route();
+        if (result && result.error) {
+          playerEl.hidden = false;
+          showPlayerError(result.error);
+        } else if (result && result.pending) {
+          remotePlay(result.pending.pi, result.pending.ei);
+        }
+      });
     })
     .catch(function () {
       if (location.protocol === "file:") {
