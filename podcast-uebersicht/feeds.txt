@@ -1,3 +1,10 @@
 # CheckPod – Der Podcast mit Checker Tobi (BR)
 https://feeds.br.de/checkpod-der-podcast-mit-checker-tobi/feed.xml
+
+# Lachlabor (BR)
+https://feeds.br.de/lachlabor/feed.xml
+
+# Die gute Nachricht mit der Maus (WDR) – Webseite, der Feed wird automatisch gesucht
+https://www.ardsounds.de/sendung/die-gute-nachricht-mit-der-maus/urn:ard:show:a2f051e349e1177a/
+
 # Weitere Feeds hier eintragen

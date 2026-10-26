@@ -14,6 +14,7 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urljoin
 
 import feedparser
 import requests
@@ -132,14 +133,55 @@ def parse_episode(entry) -> dict:
     }
 
 
-def fetch_podcast(url: str) -> dict:
-    """Einen Feed abrufen und auswerten. Wirft bei Fehlern eine Exception."""
+FEED_LINK_RE = re.compile(r"<link\b[^>]*>", re.IGNORECASE)
+HREF_RE = re.compile(r"""href\s*=\s*["']([^"']+)["']""", re.IGNORECASE)
+CANDIDATE_RE = re.compile(r"(rss|feed|\.xml|\.podcast)", re.IGNORECASE)
+
+
+def find_feed_links(page: str, base_url: str) -> list[str]:
+    """Feed-Adressen auf einer Webseite suchen (<link rel="alternate" type="application/rss+xml">)."""
+    links = []
+    for tag in FEED_LINK_RE.findall(page):
+        if re.search(r"application/(rss|atom)\+xml", tag, re.IGNORECASE):
+            href = HREF_RE.search(tag)
+            if href:
+                links.append(urljoin(base_url, html.unescape(href.group(1))))
+    return list(dict.fromkeys(links))
+
+
+def find_candidate_links(page: str, base_url: str) -> list[str]:
+    """Alle Links, die nach einem Feed aussehen – als Hinweis für die Fehlermeldung."""
+    links = [urljoin(base_url, html.unescape(h)) for h in HREF_RE.findall(page) if CANDIDATE_RE.search(h)]
+    return list(dict.fromkeys(links))[:10]
+
+
+def download(url: str) -> requests.Response:
     response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT)
     response.raise_for_status()
+    return response
 
+
+def fetch_podcast(url: str) -> dict:
+    """Einen Feed abrufen und auswerten. Wirft bei Fehlern eine Exception.
+
+    Ist die Adresse eine Webseite statt eines Feeds, wird der dort verlinkte Feed verwendet.
+    """
+    response = download(url)
     parsed = feedparser.parse(response.content)
-    if parsed.bozo and not parsed.entries:
-        raise ValueError(f"Kein gültiger Feed ({parsed.get('bozo_exception')})")
+
+    if not parsed.entries and "html" in response.headers.get("Content-Type", ""):
+        page = response.text
+        feed_links = find_feed_links(page, response.url)
+        if not feed_links:
+            hint = ", ".join(find_candidate_links(page, response.url)) or "keine"
+            raise ValueError(f"Webseite ohne verlinkten Feed (mögliche Links: {hint})")
+        print(f"  Webseite – verwende Feed {feed_links[0]}")
+        parsed = feedparser.parse(download(feed_links[0]).content)
+
+    if not parsed.entries:
+        if parsed.bozo:
+            raise ValueError(f"Kein gültiger Feed ({parsed.get('bozo_exception')})")
+        raise ValueError("Feed enthält keine Folgen")
 
     feed = parsed.feed
     episodes = [parse_episode(e) for e in parsed.entries]
