@@ -7,7 +7,9 @@ https://feeds.br.de/lachlabor/feed.xml
 # Die gute Nachricht mit der Maus (WDR) – Sendungsseite bei ARD Sounds, wird über die ARD-Schnittstelle geladen
 https://www.ardsounds.de/sendung/die-gute-nachricht-mit-der-maus/urn:ard:show:a2f051e349e1177a/
 
-# Die drei ??? Kids (EUROPA) – nur bei Spotify, wird als eingebetteter Spotify-Player angezeigt
-https://open.spotify.com/artist/0vLsqW05dyLvjuKKftAEGA
+# Die drei ??? Kids (EUROPA) – über Apple Music (ganze Folgen mit Apple-Music-Abo, sonst Vorschau)
+https://music.apple.com/de/artist/die-drei-kids/305761269
+# Alternativ über Spotify:
+# https://open.spotify.com/artist/0vLsqW05dyLvjuKKftAEGA
 
 # Weitere Feeds hier eintragen

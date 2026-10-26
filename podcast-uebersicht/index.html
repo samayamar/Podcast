@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://open.spotify.com https://open.spotifycdn.com; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:; frame-src https://open.spotify.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://open.spotify.com https://open.spotifycdn.com; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:; frame-src https://open.spotify.com https://embed.music.apple.com">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#fff4d6">
 <title>SpotiMy</title>
@@ -268,6 +268,8 @@
   /* Spotify-Folge: kompakter Spotify-Player unten fest, wie der eigene Player */
   .spotify-frame.album iframe { display: block; width: 100%; height: 100%; border: 0; }
   .spotify-frame.album .embed { flex: 1; min-height: 0; }
+  /* Apple-Music-Player braucht etwas mehr Höhe (175 px) */
+  .spotify-frame.album.apple { height: calc(229px + env(safe-area-inset-bottom)); }
   .spotify-open {
     flex: none;
     display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -462,6 +464,7 @@
       const name = el("div");
       name.append(el("h2", null, p.title || "Podcast"));
       if (p.type === "spotify") name.append(el("span", "tag", "Spotify"));
+      if (p.type === "apple") name.append(el("span", "tag", "Apple Music"));
       tile.append(cover(p.image), name);
       tile.addEventListener("click", function () {
         lastTile = tile;
@@ -587,13 +590,20 @@
     // Spotify ohne einzelne Folgen: Spotify-Player des Künstlers zeigen.
     // Er wird erst jetzt geladen – keine Spotify-Inhalte auf der Startseite.
     if (p.type === "spotify" && !episodesEl.children.length) {
-      const embed = spotifyEmbedUrl(p.embed_url);
+      const embed = embedUrl(p.embed_url);
       if (embed) showSpotify(embed, p.title, false);
       return;
     }
 
     if (!episodesEl.children.length) {
       episodesEl.append(el("li", "notice", "Hier gibt es noch keine Folgen."));
+    }
+
+    // Apple Music: aus der Suche heraus gewählte Folge gleich öffnen
+    if (p.type === "apple" && pendingSpotify && pendingSpotify.pi === index) {
+      const pending = pendingSpotify;
+      pendingSpotify = null;
+      openSpotifyEpisode(pending.pi, pending.ei);
     }
 
     // Spotify-Steuerung schon vorladen, damit die Folge beim Antippen sofort startet
@@ -611,20 +621,23 @@
   }
 
   function isPlayable(ep) {
-    return Boolean(safeUrl(ep.audio_url) || spotifyEmbedUrl(ep.embed_url));
+    return Boolean(safeUrl(ep.audio_url) || embedUrl(ep.embed_url));
   }
 
-  // Spotify-Link zum Öffnen in der App (dort laufen ganze Folgen, auch ohne Browser-Anmeldung)
+  // Link zum Öffnen in der Spotify- bzw. Apple-Music-App (dort laufen ganze Folgen)
   function spotifyOpenUrl(embed) {
-    return embed.replace("/embed/", "/");
+    return isApple(embed)
+      ? embed.replace("https://embed.music.apple.com/", "https://music.apple.com/")
+      : embed.replace("/embed/", "/");
   }
 
   // Unten fester Kasten: Knopf "In Spotify öffnen" + Platz für den Spotify-Player
   function spotifyAlbumBox(embed, title) {
-    const box = el("div", "spotify-frame album");
+    const apple = isApple(embed);
+    const box = el("div", "spotify-frame album" + (apple ? " apple" : ""));
     box.id = "spotify-frame";
-    box.title = "Spotify-Player: " + (title || "");
-    const open = el("a", "spotify-open", "▶ Ganze Folge in Spotify öffnen");
+    box.title = (apple ? "Apple-Music-Player: " : "Spotify-Player: ") + (title || "");
+    const open = el("a", "spotify-open", apple ? "▶ In Apple Music öffnen" : "▶ Ganze Folge in Spotify öffnen");
     open.id = "spotify-open";
     open.href = spotifyOpenUrl(embed);
     open.target = "_blank";
@@ -645,8 +658,8 @@
     audio.pause(); // nicht zwei Player gleichzeitig
     // Immer ein neues iframe statt src zu ändern – das hält den Browserverlauf sauber
     const frame = el("iframe", album ? null : "spotify-frame");
-    frame.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
-    frame.title = "Spotify-Player: " + (title || "");
+    frame.allow = "autoplay *; clipboard-write; encrypted-media *; fullscreen *; picture-in-picture";
+    frame.title = (isApple(embed) ? "Apple-Music-Player: " : "Spotify-Player: ") + (title || "");
     frame.src = embed;
     if (album) {
       const parts = spotifyAlbumBox(embed, title);
@@ -740,7 +753,7 @@
 
   function openSpotifyEpisode(pi, ei) {
     const ep = podcasts[pi].episodes[ei];
-    const embed = spotifyEmbedUrl(ep.embed_url);
+    const embed = embedUrl(ep.embed_url);
     if (!embed) return;
     // Aus der Suche: erst zur Detailansicht des Podcasts wechseln
     if (location.hash !== "#podcast-" + pi) {
@@ -749,7 +762,7 @@
       return;
     }
     spotifyCurrent = { pi: pi, ei: ei };
-    const uri = spotifyUri(embed);
+    const uri = isApple(embed) ? null : spotifyUri(embed);
     if (spotifyApi && uri) {
       showSpotifyControlled(uri, embed, ep.title);
     } else {
@@ -758,10 +771,14 @@
     updateCards();
   }
 
-  // Nur echte Spotify-Embed-Adressen zulassen
-  function spotifyEmbedUrl(value) {
+  // Nur echte Player-Adressen von Spotify und Apple Music zulassen
+  function embedUrl(value) {
     const url = safeUrl(value);
-    return url && /^https:\/\/open\.spotify\.com\/embed\//.test(url) ? url : null;
+    return url && /^https:\/\/(open\.spotify\.com\/embed\/|embed\.music\.apple\.com\/)/.test(url) ? url : null;
+  }
+
+  function isApple(embed) {
+    return embed.indexOf("https://embed.music.apple.com/") === 0;
   }
 
   function removeSpotify() {

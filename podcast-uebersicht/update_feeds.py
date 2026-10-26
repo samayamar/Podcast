@@ -375,13 +375,78 @@ def fetch_spotify(url: str, kind: str, spotify_id: str) -> dict:
     }
 
 
+APPLE_ARTIST_RE = re.compile(r"^https://music\.apple\.com/([a-z]{2})/artist/(?:[^/?#]+/)?(\d+)")
+
+
+def apple_artwork(url: str | None, size: int = 400) -> str | None:
+    """iTunes-Cover gibt es in jeder Größe: "…/100x100bb.jpg" -> "…/400x400bb.jpg"."""
+    return re.sub(r"/\d+x\d+bb\.", f"/{size}x{size}bb.", url) if url else None
+
+
+def fetch_apple_artist(url: str, country: str, artist_id: str) -> dict:
+    """Apple-Music-Künstler: Alben (= Folgen) über die öffentliche iTunes-Suche laden.
+
+    Braucht keinen Schlüssel. Abgespielt wird im eingebetteten Apple-Music-Player
+    (ganze Folgen mit Apple-Music-Abo, sonst Vorschau).
+    """
+    response = requests.get(
+        "https://itunes.apple.com/lookup",
+        params={"id": artist_id, "entity": "album", "country": country.upper(), "limit": 200},
+        headers={"User-Agent": USER_AGENT},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    results = response.json().get("results", [])
+    artist = next((r for r in results if r.get("wrapperType") == "artist"), {})
+
+    episodes = []
+    for album in results:
+        if album.get("wrapperType") != "collection" or not album.get("collectionViewUrl"):
+            continue
+        name = album.get("collectionName") or ""
+        # Zweisprachige Ausgaben ("Titel / Title") und Sammelboxen auslassen
+        if " / " in name or re.search(r"\bbox\b", name, re.IGNORECASE):
+            continue
+        link = album["collectionViewUrl"].split("?")[0]
+        episodes.append({
+            "title": clean_text(name) or "Ohne Titel",
+            "published": album.get("releaseDate"),
+            "duration": None,
+            "summary": "",
+            "link": link,
+            "audio_url": None,
+            "embed_url": link.replace("https://music.apple.com/", "https://embed.music.apple.com/", 1),
+            "image": apple_artwork(album.get("artworkUrl100")),
+        })
+    episodes.sort(key=lambda e: e["published"] or "", reverse=True)
+    if not episodes:
+        raise ValueError("Bei Apple Music keine Alben gefunden")
+
+    return {
+        "type": "apple",
+        "title": clean_text(artist.get("artistName")) or "Apple Music",
+        "description": "",
+        "link": url,
+        "image": episodes[0]["image"],
+        "feed_url": url,
+        "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "episode_count": len(episodes),
+        "episodes": episodes[:MAX_EPISODES],
+    }
+
+
 def fetch_podcast(url: str) -> dict:
     """Einen Feed abrufen und auswerten. Wirft bei Fehlern eine Exception.
 
     Ist die Adresse eine Webseite statt eines Feeds, wird der dort verlinkte Feed verwendet.
     Sendungsseiten von ARD Sounds / ARD Audiothek werden über die ARD-Schnittstelle geladen.
-    Spotify-Links werden als eingebetteter Spotify-Player übernommen.
+    Spotify-Links werden als eingebetteter Spotify-Player übernommen,
+    Apple-Music-Künstler als Folgen mit eingebettetem Apple-Music-Player.
     """
+    apple = APPLE_ARTIST_RE.match(url)
+    if apple:
+        return fetch_apple_artist(url, apple.group(1), apple.group(2))
+
     spotify = SPOTIFY_RE.match(url)
     if spotify:
         return fetch_spotify(url, spotify.group(1), spotify.group(2))

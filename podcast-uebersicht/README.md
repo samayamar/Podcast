@@ -13,6 +13,7 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
    Statt einer Feed-Adresse geht auch eine Webseite, die einen Feed verlinkt, oder eine Sendungsseite bei ARD Sounds bzw. ARD Audiothek (`…/sendung/…/urn:ard:show:…`).
    Spotify-Links (`https://open.spotify.com/artist/…`, `…/album/…`, `…/show/…`, `…/playlist/…`) erscheinen als Kachel mit eingebettetem Spotify-Player. Ganze Folgen gibt es dort nur, wenn man im Browser bei Spotify angemeldet ist, sonst 30-Sekunden-Ausschnitte. Der Spotify-Player wird erst geladen, wenn man die Kachel antippt.
    Mit Spotify-Zugangsdaten (`SPOTIFY_CLIENT_ID` und `SPOTIFY_CLIENT_SECRET` als Umgebungsvariablen bzw. GitHub-Secrets, App auf developer.spotify.com, Besitzer braucht Premium) lädt das Skript bei Spotify-Künstlern die einzelnen Folgen (Alben). Sie erscheinen dann wie die anderen Folgen als Bildkacheln und öffnen sich im Spotify-Player.
+   Apple-Music-Künstler (`https://music.apple.com/de/artist/…/ID`) werden über Apples öffentliche iTunes-Suche eingelesen, ohne Zugangsdaten. Die Alben erscheinen als Folgen-Kacheln und spielen im eingebetteten Apple-Music-Player: ganze Folgen mit Apple-Music-Abo (im Player anmelden), sonst Vorschau. Zweisprachige Ausgaben und Sammelboxen werden ausgelassen.
 2. **Feeds einlesen:**
    ```
    python update_feeds.py
@@ -39,7 +40,7 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
 
 ## Datenschutz
 
-Keine Benutzerkonten, kein Tracking, keine externen Schriftarten oder Skripte. Ausnahme: Beim Öffnen einer Spotify-Kachel lädt der eingebettete Spotify-Player Inhalte und Cookies von Spotify. Cover-Bilder und Audiodateien lädt der Browser direkt von den Servern der Podcast-Anbieter.
+Keine Benutzerkonten, kein Tracking, keine externen Schriftarten oder Skripte. Ausnahme: Beim Öffnen einer Spotify- bzw. Apple-Music-Folge lädt der eingebettete Player Inhalte und Cookies von Spotify bzw. Apple. Cover-Bilder und Audiodateien lädt der Browser direkt von den Servern der Podcast-Anbieter.
 
 ## Online über GitHub Pages
 
