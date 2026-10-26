@@ -1,33 +1,34 @@
 import json, re, requests
 UA = {"User-Agent": "PodcastUebersicht/1.0"}
-def show(label, url, **kw):
+def get(url, **kw):
     try:
         r = requests.request(kw.pop("method", "GET"), url, headers=UA, timeout=15, **kw)
-        print(f"\n=== {label}: {r.status_code} {r.headers.get('Content-Type')} len={len(r.text)} final={r.url}")
+        print(f"\n=== {url[:100]} -> {r.status_code} {r.headers.get('Content-Type')}")
         return r
     except Exception as e:
-        print(f"\n=== {label}: FEHLER {e}")
-def grep(text, pat, n=25):
-    seen = []
-    for m in re.finditer(pat, text, re.I):
-        s = text[max(0, m.start()-80): m.end()+120].replace("\n", " ")
-        if s not in seen: seen.append(s)
-        if len(seen) >= n: break
-    for s in seen: print("  ..", s)
+        print(f"\n=== {url[:100]} FEHLER {e}")
 
-r = show("ARD Sounds", "https://www.ardsounds.de/sendung/die-gute-nachricht-mit-der-maus/urn:ard:show:a2f051e349e1177a/")
+print("##### Apple-Podcast-Verzeichnis")
+for term in ["drei ??? kids", "drei fragezeichen kids", "die drei kids", "drei ??? kids podcast"]:
+    r = get("https://itunes.apple.com/search", params={"media": "podcast", "term": term, "country": "DE", "limit": 15})
+    if r is not None:
+        for x in r.json().get("results", []):
+            print(f"  - {x.get('collectionName')} | {x.get('artistName')} | Folgen: {x.get('trackCount')} | {x.get('feedUrl')}")
+
+print("\n##### ARD Audiothek Suche")
+q = '{ search(query: "drei Fragezeichen Kids", limit: 10) { programSets { nodes { title coreId numberOfElements } } items { nodes { title programSet { title } } } } }'
+r = get("https://api.ardaudiothek.de/graphql", method="POST", json={"query": q})
+if r is not None: print(r.text[:1500])
+r = get("https://api.ardaudiothek.de/search/programsets", params={"query": "drei ??? Kids", "limit": 10})
+if r is not None: print(r.text[:1500])
+
+print("\n##### Gratis-Hörspiele")
+r = get("https://www.gratis-hoerspiele.de/serie/die-drei-fragezeichen-kids/")
 if r is not None:
-    grep(r.text, r"rss|\.xml|feed|\.mp3|programset|graphql|api\.ard[a-z]*\.de", 30)
-    print("  scripts:", re.findall(r'<script[^>]+src="([^"]+)"', r.text)[:10])
-r = show("ARD Audiothek", "https://www.ardaudiothek.de/sendung/die-gute-nachricht-mit-der-maus/urn:ard:show:a2f051e349e1177a/")
+    links = sorted(set(re.findall(r'href="([^"]+)"', r.text)))
+    for l in links:
+        if re.search(r"\.mp3|rss|feed|spotify|apple|deezer|youtube|europa|amazon|podcast", l, re.I): print("  ", l)
+r = get("https://www.dreifragezeichen-kids.de/")
 if r is not None:
-    grep(r.text, r"rss|\.mp3|programset|graphql", 15)
-for sid in ["a2f051e349e1177a", "urn:ard:show:a2f051e349e1177a"]:
-    q = '{ programSet(id: "%s") { title synopsis image { url } items(first: 2) { nodes { title publishDate duration image { url } audios { url downloadUrl mimeType } } } } }' % sid
-    r = show(f"GraphQL {sid}", "https://api.ardaudiothek.de/graphql", method="POST", json={"query": q})
-    if r is not None: print(r.text[:1500])
-    r = show(f"REST programsets {sid}", f"https://api.ardaudiothek.de/programsets/{sid}")
-    if r is not None: print(r.text[:800])
-r = show("WDR Maus", "https://www.wdrmaus.de/hoeren/good-news.php5")
-if r is not None:
-    grep(r.text, r"\.podcast|rss|feed|\.mp3|audiothek|ardsounds", 30)
+    for l in sorted(set(re.findall(r'href="([^"]+)"', r.text))):
+        if re.search(r"\.mp3|rss|feed|spotify|apple|podcast|player|hoer", l, re.I): print("  ", l)
