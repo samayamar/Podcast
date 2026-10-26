@@ -17,20 +17,33 @@ def call(label, url, **params):
     return r.json()
 d = call("Künstler", f"https://api.spotify.com/v1/artists/{ART}")
 if d: print(d.get("name"), d.get("images", [{}])[0].get("url") if d.get("images") else None)
-for lim in (20, 10, 5):
-    d = call(f"Alben limit={lim}", f"https://api.spotify.com/v1/artists/{ART}/albums", include_groups="album", market="DE", limit=lim)
-    if d: break
-if d:
-    print("total:", d.get("total"), "next:", d.get("next"))
-    items = list(d["items"]); url = d.get("next"); pages = 1
-    while url and pages < 30:
-        r = requests.get(url, headers=H, timeout=15); pages += 1
-        if r.status_code != 200: print("Seite", pages, r.status_code, r.text[:200]); break
-        j = r.json(); items += j["items"]; url = j.get("next")
-    print("geladen:", len(items), "Seiten:", pages)
-    for a in sorted(items, key=lambda a: a["release_date"], reverse=True)[:6]:
-        print(" -", a["release_date"], a["name"], a["id"], (a.get("images") or [{}])[0].get("url"))
-    a = call("Ein Album", f"https://api.spotify.com/v1/albums/{items[0]['id']}", market="DE")
-    if a: print(a["name"], "Tracks:", a["tracks"]["total"], "Dauer ms erste:", a["tracks"]["items"][0].get("duration_ms"))
-d = call("Suche", "https://api.spotify.com/v1/search", q="Die drei ??? Kids", type="album", market="DE", limit=10)
-if d: print("Suche total:", d["albums"]["total"], [x["name"] for x in d["albums"]["items"][:5]])
+def page_all(url, params, key=None, maxpages=40):
+    items, offset = [], 0
+    for _ in range(maxpages):
+        r = requests.get(url, headers=H, params={**params, "limit": 10, "offset": offset}, timeout=15)
+        if r.status_code != 200:
+            print("  Seite offset", offset, r.status_code, r.text[:150]); break
+        j = r.json(); j = j[key] if key else j
+        items += j["items"]
+        if offset == 0: print("  total:", j.get("total"))
+        if not j.get("next"): break
+        offset += 10
+    return items
+
+A = f"https://api.spotify.com/v1/artists/{ART}/albums"
+for params in ({}, {"market": "DE"}, {"include_groups": "album,single,compilation,appears_on"}, {"include_groups": "album,single,compilation,appears_on", "market": "DE"}):
+    print("\n=== Alben", params)
+    items = page_all(A, params)
+    print("  geladen:", len(items), [ (i["album_type"], i["name"]) for i in items[:3]])
+
+for q in ('artist:"Die drei ??? Kids"', 'Die drei ??? Kids'):
+    print("\n=== Suche", q)
+    items = page_all("https://api.spotify.com/v1/search", {"q": q, "type": "album", "market": "DE"}, key="albums")
+    kids = [i for i in items if any(a["id"] == ART for a in i["artists"])]
+    print("  geladen:", len(items), "davon vom Künstler:", len(kids))
+    for a in sorted(kids, key=lambda a: a["release_date"], reverse=True)[:5]:
+        print("   -", a["release_date"], a["name"], a["id"])
+
+print("\n=== Show-Suche")
+items = page_all("https://api.spotify.com/v1/search", {"q": "drei ??? Kids", "type": "show,audiobook", "market": "DE"}, key="shows")
+print([ (i["name"], i["publisher"], i["id"]) for i in items[:10]])
