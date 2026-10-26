@@ -37,6 +37,11 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
 | `update_feeds.py` | liest die Feeds und schreibt `data/podcasts.json` |
 | `index.html` | Startseite mit Kacheln und Detailansicht (CSS und JavaScript eingebettet) |
 | `data/podcasts.json` | wird vom Skript erzeugt (nicht im Git-Repository) |
+| `manifest.webmanifest`, `icon-*.png`, `icon.svg` | App-Symbol und Angaben für „Zum Home-Bildschirm“ |
+
+## Auf iPad und iPhone als App
+
+In Safari die Seite öffnen → Teilen-Symbol → **„Zum Home-Bildschirm“**. SpotiMy startet dann mit eigenem Symbol im Vollbild, ohne Safari-Leisten. Im Querformat auf dem iPad sitzt der Player als große Leiste rechts, im Hochformat unten.
 
 ## Datenschutz
 

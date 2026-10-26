@@ -2,10 +2,18 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://open.spotify.com https://open.spotifycdn.com; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:; frame-src https://open.spotify.com https://embed.music.apple.com">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#fff4d6">
+<!-- Als App auf den Home-Bildschirm (iPad/iPhone): Vollbild ohne Safari-Leisten -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SpotiMy">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <title>SpotiMy</title>
 <style>
   :root {
@@ -40,11 +48,17 @@
     line-height: 1.3;
     padding-bottom: calc(var(--player-h) + 24px);
   }
-  header, main { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
-  header { padding-top: 20px; }
+  header, main {
+    max-width: 1100px; margin: 0 auto;
+    padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  }
+  header { padding-top: max(20px, env(safe-area-inset-top)); }
   h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; color: var(--purple); }
   [hidden] { display: none !important; }
   button { font: inherit; color: inherit; }
+  /* Touch: kein Doppeltipp-Zoom, kein grauer Tipp-Blitz, kein Markieren bei langem Druck */
+  button, a, .seek { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .tile, .episode, .round, .back, .player { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   img { -webkit-user-drag: none; }
 
   /* Cover und Platzhalter */
@@ -81,7 +95,9 @@
     text-align: center;
     transition: transform .12s, box-shadow .12s;
   }
-  .tile:hover { transform: translateY(-3px) rotate(-.5deg); }
+  @media (hover: hover) {
+    .tile:hover { transform: translateY(-3px) rotate(-.5deg); }
+  }
   .tile:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(43, 33, 71, .18); }
   .tile:focus-visible, .episode:focus-visible, .round:focus-visible, .back:focus-visible {
     outline: 4px solid var(--purple-dark);
@@ -313,6 +329,43 @@
     font-size: 1.1rem;
   }
   .notice p { margin: 8px 0 0; font-size: 1rem; }
+
+  /* Tablet quer (z. B. iPad mini 1133×744): Player als große Seitenleiste rechts,
+     damit die Kacheln die ganze Höhe bekommen */
+  @media (min-width: 900px) and (orientation: landscape) {
+    body.has-player { padding-right: var(--sidebar-w); padding-bottom: 24px; }
+    :root { --sidebar-w: 340px; }
+    .player {
+      left: auto; top: 0; right: 0; bottom: 0;
+      width: var(--sidebar-w);
+      padding: max(28px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right))
+               max(24px, env(safe-area-inset-bottom)) 24px;
+      border-radius: 32px 0 0 32px;
+      box-shadow: -6px 0 24px rgba(43, 33, 71, .25);
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .player-inner { flex-direction: column; align-items: stretch; gap: 22px; width: 100%; }
+    .player .cover { width: min(100%, 260px); align-self: center; border-radius: 24px; }
+    .player-title {
+      white-space: normal; text-align: center; font-size: 1.3rem; line-height: 1.25;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    }
+    .player-main { gap: 16px; }
+    .controls { gap: 22px; }
+    .round { width: 68px; height: 68px; }
+    .round.play { width: 100px; height: 100px; }
+    .round.play svg { width: 50px; height: 50px; }
+  }
+
+  /* Tablet hoch (z. B. iPad mini 744×1133): etwas größere Tasten und Cover */
+  @media (min-width: 601px) and (orientation: portrait) {
+    .player .cover { width: 120px; }
+    .round { width: 68px; height: 68px; }
+    .round.play { width: 96px; height: 96px; }
+    .round.play svg { width: 48px; height: 48px; }
+    .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+    .episodes { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  }
 
   @media (max-width: 600px) {
     h1 { font-size: 1.7rem; }
@@ -894,12 +947,18 @@
     });
   }
 
+  // Querformat auf dem Tablet: Player ist eine Seitenleiste statt unten
+  const sidebarQuery = window.matchMedia("(min-width: 900px) and (orientation: landscape)");
+
   function updatePlayerHeight() {
     const albumFrame = document.querySelector(".spotify-frame.album");
+    const playerShown = !playerEl.hidden && !document.body.classList.contains("spotify-mode");
+    document.body.classList.toggle("has-player", playerShown && !albumFrame);
     const h = albumFrame ? albumFrame.offsetHeight
-      : playerEl.hidden || document.body.classList.contains("spotify-mode") ? 0 : playerEl.offsetHeight;
+      : !playerShown || sidebarQuery.matches ? 0 : playerEl.offsetHeight;
     document.documentElement.style.setProperty("--player-h", h + "px");
   }
+  if (sidebarQuery.addEventListener) sidebarQuery.addEventListener("change", updatePlayerHeight);
 
   toggleBtn.addEventListener("click", togglePlay);
   $("rewind").addEventListener("click", function () { skip(-15); });
