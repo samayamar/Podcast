@@ -21,4 +21,16 @@ https://taxi-ins-mich.podigee.io/feed/mp3
 # GEOlino Spezial – Der Wissenspodcast (Feed laut Apple-Podcast-Verzeichnis; Artikel: geo.de/geolino/mensch/22743-…)
 https://cdn.audiorella.com/podcasts/1688-geolino-spezial-der-wissenspodcast-fur-junge-entdeckerinnen-und-entdecker/feed.rss
 
+# Schlaulicht
+https://schlaulicht.info/feed/m4a/
+
+# KinderUni Heidelberg (LMU iTunes U, Wintersemester 2009/10)
+http://xserve04.itunes.uni-muenchen.de/itunesu/KongresseEvents/KinderUni/2009_2010_WiSe/hd.de/09_10ws_kiuni_hd.rss
+
+# Kakadu (Deutschlandfunk Kultur)
+https://www.kakadu.de/kakadu-104.xml
+
+# Mikado am Morgen (NDR Info)
+https://www.ndr.de/nachrichten/info/sendungen/mikado/mikado_am_morgen/podcast4223.xml
+
 # Weitere Feeds hier eintragen

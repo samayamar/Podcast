@@ -538,6 +538,9 @@ def main() -> int:
             print(f"  OK: {podcast['title']} (Spotify-Player)")
         else:
             print(f"  OK: {podcast['title']} ({podcast['episode_count']} Folgen)")
+        insecure = sum(1 for e in podcast["episodes"] if (e.get("audio_url") or "").startswith("http://"))
+        if insecure:
+            print(f"  Hinweis: {insecure} Folgen nur über http:// – Browser blockieren sie auf https-Seiten evtl.")
 
     write_json(
         {
