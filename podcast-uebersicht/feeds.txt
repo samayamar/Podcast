@@ -12,4 +12,13 @@ https://music.apple.com/de/artist/die-drei-kids/305761269
 # Alternativ über Spotify:
 # https://open.spotify.com/artist/0vLsqW05dyLvjuKKftAEGA
 
+# Die Maus zum Hören (WDR) – Sendungsseite bei ARD Sounds
+https://www.ardsounds.de/sendung/die-maus-zum-hoeren/urn:ard:show:b4a27641ebfcb11b/
+
+# Taxi ins Mich
+https://taxi-ins-mich.podigee.io/feed/mp3
+
+# GEOlino Spezial – Der Wissenspodcast (Feed laut Apple-Podcast-Verzeichnis; Artikel: geo.de/geolino/mensch/22743-…)
+https://cdn.audiorella.com/podcasts/1688-geolino-spezial-der-wissenspodcast-fur-junge-entdeckerinnen-und-entdecker/feed.rss
+
 # Weitere Feeds hier eintragen
