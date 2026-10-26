@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:; frame-src https://open.spotify.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://open.spotify.com https://open.spotifycdn.com; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:; frame-src https://open.spotify.com">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#fff4d6">
 <title>SpotiMy</title>
@@ -266,7 +266,9 @@
     box-shadow: var(--shadow);
   }
   /* Spotify-Folge: kompakter Spotify-Player unten fest, wie der eigene Player */
+  .spotify-frame.album iframe { display: block; width: 100%; height: 100%; border: 0; }
   .spotify-frame.album {
+    overflow: hidden;
     position: fixed;
     left: 50%; bottom: 0; z-index: 10;
     transform: translateX(-50%);
@@ -579,11 +581,16 @@
       episodesEl.append(el("li", "notice", "Hier gibt es noch keine Folgen."));
     }
 
-    // Aus der Suche heraus gewählte Spotify-Folge öffnen
-    if (pendingSpotify && pendingSpotify.pi === index) {
-      const pending = pendingSpotify;
+    // Spotify-Steuerung schon vorladen, damit die Folge beim Antippen sofort startet
+    if (p.type === "spotify") {
+      const pending = pendingSpotify && pendingSpotify.pi === index ? pendingSpotify : null;
       pendingSpotify = null;
-      openSpotifyEpisode(pending.pi, pending.ei);
+      loadSpotifyApi()
+        .catch(function () { /* dann normaler eingebetteter Player */ })
+        .then(function () {
+          // Aus der Suche heraus gewählte Folge öffnen (falls noch in dieser Ansicht)
+          if (pending && location.hash === "#podcast-" + index) openSpotifyEpisode(pending.pi, pending.ei);
+        });
     }
     updateCards();
   }
@@ -611,6 +618,84 @@
     return frame;
   }
 
+  /* Spotify iFrame API: steuert den eingebetteten Player, damit eine Folge beim Antippen
+     sofort startet. Wird erst geladen, wenn eine Spotify-Serie geöffnet wird. Klappt das
+     nicht, gibt es den normalen eingebetteten Player (dann einmal auf Play tippen). */
+  let spotifyApi = null;        // IFrameAPI, sobald geladen
+  let spotifyApiLoading = null; // Promise während des Ladens
+  let spotifyController = null;
+  let spotifyWantsPlay = false;
+
+  function loadSpotifyApi() {
+    if (spotifyApi) return Promise.resolve(spotifyApi);
+    if (spotifyApiLoading) return spotifyApiLoading;
+    spotifyApiLoading = new Promise(function (resolve, reject) {
+      const timer = setTimeout(function () { reject(new Error("Zeitüberschreitung")); }, 8000);
+      window.onSpotifyIframeApiReady = function (api) {
+        clearTimeout(timer);
+        spotifyApi = api;
+        resolve(api);
+      };
+      const script = document.createElement("script");
+      script.src = "https://open.spotify.com/embed/iframe-api/v1";
+      script.async = true;
+      script.onerror = function () { clearTimeout(timer); reject(new Error("nicht geladen")); };
+      document.head.append(script);
+    });
+    spotifyApiLoading.catch(function () { spotifyApiLoading = null; });
+    return spotifyApiLoading;
+  }
+
+  // "https://open.spotify.com/embed/album/ID" -> "spotify:album:ID"
+  function spotifyUri(embed) {
+    const m = /\/embed\/(album|artist|show|playlist|episode|track)\/([A-Za-z0-9]+)/.exec(embed);
+    return m ? "spotify:" + m[1] + ":" + m[2] : null;
+  }
+
+  function playInController(uri) {
+    spotifyWantsPlay = true;
+    spotifyController.loadUri(uri);
+    spotifyController.play();
+  }
+
+  function showSpotifyControlled(uri, title) {
+    audio.pause();
+    spotifyUsed = true;
+    document.body.classList.add("spotify-mode");
+
+    if (spotifyController && $("spotify-frame")) {
+      $("spotify-frame").title = "Spotify-Player: " + (title || "");
+      playInController(uri);
+      return;
+    }
+
+    const old = $("spotify-frame");
+    const box = el("div", "spotify-frame album");
+    box.id = "spotify-frame";
+    box.title = "Spotify-Player: " + (title || "");
+    const target = el("div");
+    box.append(target);
+    if (old) old.replaceWith(box);
+    else detailEl.insertBefore(box, episodesEl);
+    updatePlayerHeight();
+
+    spotifyWantsPlay = true;
+    spotifyApi.createController(target, { uri: uri, width: "100%", height: 152 }, function (controller) {
+      // Detailansicht inzwischen verlassen?
+      if (!box.isConnected) { controller.destroy(); return; }
+      spotifyController = controller;
+      const frame = box.querySelector("iframe");
+      if (frame) frame.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+      controller.addListener("ready", function () {
+        if (spotifyWantsPlay) controller.play();
+      });
+      controller.addListener("playback_update", function (e) {
+        if (e && e.data && !e.data.isPaused) spotifyWantsPlay = false;
+      });
+      controller.play();
+    });
+  }
+
   function openSpotifyEpisode(pi, ei) {
     const ep = podcasts[pi].episodes[ei];
     const embed = spotifyEmbedUrl(ep.embed_url);
@@ -622,7 +707,12 @@
       return;
     }
     spotifyCurrent = { pi: pi, ei: ei };
-    showSpotify(embed, ep.title, true);
+    const uri = spotifyUri(embed);
+    if (spotifyApi && uri) {
+      showSpotifyControlled(uri, ep.title);
+    } else {
+      showSpotify(embed, ep.title, true);
+    }
     updateCards();
   }
 
@@ -633,6 +723,11 @@
   }
 
   function removeSpotify() {
+    if (spotifyController) {
+      try { spotifyController.destroy(); } catch (e) { /* schon weg */ }
+      spotifyController = null;
+    }
+    spotifyWantsPlay = false;
     const frame = $("spotify-frame");
     if (frame) frame.remove();
     spotifyCurrent = null;
