@@ -1,34 +1,29 @@
-import json, re, requests
-UA = {"User-Agent": "PodcastUebersicht/1.0"}
-def get(url, **kw):
-    try:
-        r = requests.request(kw.pop("method", "GET"), url, headers=UA, timeout=15, **kw)
-        print(f"\n=== {url[:100]} -> {r.status_code} {r.headers.get('Content-Type')}")
-        return r
-    except Exception as e:
-        print(f"\n=== {url[:100]} FEHLER {e}")
-
-print("##### Apple-Podcast-Verzeichnis")
-for term in ["drei ??? kids", "drei fragezeichen kids", "die drei kids", "drei ??? kids podcast"]:
-    r = get("https://itunes.apple.com/search", params={"media": "podcast", "term": term, "country": "DE", "limit": 15})
-    if r is not None:
-        for x in r.json().get("results", []):
-            print(f"  - {x.get('collectionName')} | {x.get('artistName')} | Folgen: {x.get('trackCount')} | {x.get('feedUrl')}")
-
-print("\n##### ARD Audiothek Suche")
-q = '{ search(query: "drei Fragezeichen Kids", limit: 10) { programSets { nodes { title coreId numberOfElements } } items { nodes { title programSet { title } } } } }'
-r = get("https://api.ardaudiothek.de/graphql", method="POST", json={"query": q})
-if r is not None: print(r.text[:1500])
-r = get("https://api.ardaudiothek.de/search/programsets", params={"query": "drei ??? Kids", "limit": 10})
-if r is not None: print(r.text[:1500])
-
-print("\n##### Gratis-Hörspiele")
-r = get("https://www.gratis-hoerspiele.de/serie/die-drei-fragezeichen-kids/")
-if r is not None:
-    links = sorted(set(re.findall(r'href="([^"]+)"', r.text)))
-    for l in links:
-        if re.search(r"\.mp3|rss|feed|spotify|apple|deezer|youtube|europa|amazon|podcast", l, re.I): print("  ", l)
-r = get("https://www.dreifragezeichen-kids.de/")
-if r is not None:
-    for l in sorted(set(re.findall(r'href="([^"]+)"', r.text))):
-        if re.search(r"\.mp3|rss|feed|spotify|apple|podcast|player|hoer", l, re.I): print("  ", l)
+import os, requests
+cid, secret = os.environ.get("SPOTIFY_CLIENT_ID", ""), os.environ.get("SPOTIFY_CLIENT_SECRET", "")
+print("Client ID vorhanden:", bool(cid), "| Secret vorhanden:", bool(secret))
+if not (cid and secret):
+    raise SystemExit("Secrets fehlen")
+r = requests.post("https://accounts.spotify.com/api/token", data={"grant_type": "client_credentials"}, auth=(cid, secret), timeout=15)
+print("Token:", r.status_code, r.text[:200] if r.status_code != 200 else "ok")
+if r.status_code != 200:
+    raise SystemExit(1)
+H = {"Authorization": "Bearer " + r.json()["access_token"]}
+ART = "0vLsqW05dyLvjuKKftAEGA"
+def call(label, url, **params):
+    r = requests.get(url, headers=H, params=params, timeout=15)
+    print(f"\n=== {label}: {r.status_code}")
+    if r.status_code != 200:
+        print(r.text[:300]); return None
+    return r.json()
+d = call("Künstler", f"https://api.spotify.com/v1/artists/{ART}")
+if d: print(d.get("name"), d.get("images", [{}])[0].get("url") if d.get("images") else None)
+d = call("Alben des Künstlers", f"https://api.spotify.com/v1/artists/{ART}/albums", include_groups="album", market="DE", limit=50)
+if d:
+    print("total:", d.get("total"))
+    for a in d["items"][:8]:
+        print(" -", a["release_date"], a["name"], a["id"], (a.get("images") or [{}])[0].get("url"))
+    if d["items"]:
+        a = call("Ein Album", f"https://api.spotify.com/v1/albums/{d['items'][0]['id']}", market="DE")
+        if a: print(a["name"], "Tracks:", a["tracks"]["total"])
+d = call("Suche", "https://api.spotify.com/v1/search", q="Die drei ??? Kids", type="album", market="DE", limit=10)
+if d: print("Suche total:", d["albums"]["total"], [x["name"] for x in d["albums"]["items"][:5]])

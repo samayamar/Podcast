@@ -8,3 +8,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python diag/diag.py
+        env:
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
