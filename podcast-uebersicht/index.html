@@ -120,6 +120,7 @@
   .episode {
     position: relative;
     width: 100%;
+    min-width: 0;
     border: 0;
     border-radius: var(--radius);
     padding: 8px 8px 12px;
@@ -205,6 +206,45 @@
   }
   .player-error { margin: 0; font-weight: 700; color: var(--yellow); }
 
+  /* Suche */
+  .search {
+    position: relative;
+    margin: 18px 0 0;
+  }
+  .search input {
+    width: 100%;
+    font: inherit;
+    font-size: 1.2rem;
+    color: var(--ink);
+    padding: 16px 60px 16px 56px;
+    border: 4px solid var(--white);
+    border-radius: 999px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    outline: none;
+    -webkit-appearance: none; appearance: none;
+  }
+  .search input:focus { border-color: var(--purple); }
+  .search input::placeholder { color: #8a83a3; }
+  .search input::-webkit-search-cancel-button { display: none; }
+  .search .icon {
+    position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+    width: 26px; height: 26px; color: var(--purple); pointer-events: none;
+  }
+  .search .clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border: 0; border-radius: 50%;
+    background: var(--bg); color: var(--ink);
+    font-size: 1.4rem; font-weight: 700; cursor: pointer;
+  }
+  .results-info { margin: 18px 4px 0; font-size: 1.1rem; font-weight: 700; color: var(--purple); }
+  .episode .from {
+    display: block; margin: 4px 4px 0;
+    font-size: .8rem; font-weight: 700; color: var(--from, var(--purple));
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .episode.active .from { color: var(--ink); }
+
   .notice {
     background: var(--white);
     border-radius: var(--radius);
@@ -221,7 +261,7 @@
     .tile { display: flex; align-items: center; gap: 14px; text-align: left; padding: 10px; }
     .tile .cover { width: 96px; flex: none; }
     .tile h2 { margin: 0; font-size: 1.3rem; }
-    .episodes { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .episodes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .episode .badge { width: 44px; height: 44px; }
     .player-inner { flex-direction: column; gap: 10px; }
     .player .cover { display: none; }
@@ -237,7 +277,16 @@
 
 <main>
   <section id="overview" aria-label="Podcasts">
+    <form class="search" id="search-form" role="search" hidden>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.5-4.5"/></svg>
+      <input type="search" id="search" placeholder="Suchen …" aria-label="Folgen in allen Podcasts suchen" autocomplete="off" enterkeyhint="search">
+      <button type="button" class="clear" id="search-clear" aria-label="Suche löschen" hidden>×</button>
+    </form>
     <div class="grid" id="grid"></div>
+    <div id="results" hidden>
+      <p class="results-info" id="results-info" aria-live="polite"></p>
+      <ul class="episodes" id="results-list"></ul>
+    </div>
   </section>
 
   <section id="detail" hidden>
@@ -355,6 +404,102 @@
     });
   }
 
+  /* ---------- Folgen-Kachel (Detailansicht und Suche) ---------- */
+
+  function episodeCard(pi, ei, showPodcast) {
+    const p = podcasts[pi];
+    const ep = p.episodes[ei];
+    const li = el("li");
+    const card = el("button", "episode");
+    card.type = "button";
+    card.dataset.podcast = pi;
+    card.dataset.episode = ei;
+
+    const thumb = el("div", "thumb");
+    thumb.append(cover(episodeImage(p, ep)));
+    const badge = el("span", "badge");
+    badge.setAttribute("aria-hidden", "true");
+    thumb.append(badge);
+
+    card.append(thumb, el("h3", null, ep.title || "Folge"));
+    if (showPodcast) {
+      const from = el("span", "from", p.title || "");
+      from.style.setProperty("--from", "var(" + TILE_COLORS[pi % TILE_COLORS.length] + ")");
+      card.append(from);
+    }
+    card.addEventListener("click", function () { playEpisode(pi, ei); });
+    li.append(card);
+    return li;
+  }
+
+  /* ---------- Suche über alle Podcasts ---------- */
+
+  const searchInput = $("search");
+  const resultsEl = $("results");
+  const resultsList = $("results-list");
+  let searchIndex = [];
+
+  // Kleinschreibung, Umlaute/Akzente vereinheitlichen: "Mäuse" findet auch "mause"
+  function normalize(text) {
+    return String(text || "").toLowerCase()
+      .replace(/ß/g, "ss")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function buildSearchIndex() {
+    searchIndex = [];
+    podcasts.forEach(function (p, pi) {
+      (p.episodes || []).forEach(function (ep, ei) {
+        if (!safeUrl(ep.audio_url)) return;
+        searchIndex.push({
+          pi: pi, ei: ei,
+          title: normalize(ep.title),
+          text: normalize([ep.title, ep.summary, p.title].join(" "))
+        });
+      });
+    });
+  }
+
+  function runSearch() {
+    const query = normalize(searchInput.value).trim();
+    $("search-clear").hidden = !query;
+    if (!query) {
+      resultsEl.hidden = true;
+      gridEl.hidden = false;
+      resultsList.replaceChildren();
+      return;
+    }
+    const words = query.split(/\s+/);
+    const hits = searchIndex
+      .filter(function (e) { return words.every(function (w) { return e.text.includes(w); }); })
+      // Treffer im Titel zuerst
+      .sort(function (a, b) {
+        const at = words.every(function (w) { return a.title.includes(w); });
+        const bt = words.every(function (w) { return b.title.includes(w); });
+        return (bt - at) || a.pi - b.pi || a.ei - b.ei;
+      });
+
+    gridEl.hidden = true;
+    resultsEl.hidden = false;
+    resultsList.replaceChildren();
+    $("results-info").textContent = hits.length
+      ? (hits.length === 1 ? "1 Folge gefunden" : hits.length + " Folgen gefunden")
+      : "Nichts gefunden 🙈";
+    hits.forEach(function (h) { resultsList.append(episodeCard(h.pi, h.ei, true)); });
+    updateCards();
+  }
+
+  searchInput.addEventListener("input", runSearch);
+  $("search-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    searchInput.blur(); // Tastatur auf dem Handy schließen
+  });
+  $("search-clear").addEventListener("click", function () {
+    searchInput.value = "";
+    runSearch();
+    searchInput.focus();
+  });
+
   /* ---------- Detailansicht ---------- */
 
   function renderDetail(index) {
@@ -364,23 +509,7 @@
 
     episodesEl.replaceChildren();
     (p.episodes || []).slice(0, 20).forEach(function (ep, i) {
-      if (!safeUrl(ep.audio_url)) return;
-      const li = el("li");
-      const card = el("button", "episode");
-      card.type = "button";
-      card.dataset.podcast = index;
-      card.dataset.episode = i;
-
-      const thumb = el("div", "thumb");
-      thumb.append(cover(episodeImage(p, ep)));
-      const badge = el("span", "badge");
-      badge.setAttribute("aria-hidden", "true");
-      thumb.append(badge);
-
-      card.append(thumb, el("h3", null, ep.title || "Folge"));
-      card.addEventListener("click", function () { playEpisode(index, i); });
-      li.append(card);
-      episodesEl.append(li);
+      if (safeUrl(ep.audio_url)) episodesEl.append(episodeCard(index, i, false));
     });
 
     if (!episodesEl.children.length) {
@@ -456,7 +585,7 @@
   // Aktive Folge hervorheben und Symbol auf der Karte anpassen
   function updateCards() {
     const playing = !audio.paused && !audio.ended;
-    episodesEl.querySelectorAll(".episode").forEach(function (card) {
+    document.querySelectorAll(".episode").forEach(function (card) {
       const active = isCurrent(Number(card.dataset.podcast), Number(card.dataset.episode));
       card.classList.toggle("active", active);
       card.setAttribute("aria-label",
@@ -553,6 +682,8 @@
         return;
       }
       renderOverview();
+      buildSearchIndex();
+      $("search-form").hidden = false;
       route();
     })
     .catch(function () {
