@@ -107,7 +107,7 @@
     margin: 12px 4px 0;
     font-size: 1.25rem;
     line-height: 1.2;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    overflow-wrap: break-word;
   }
 
   /* Detailansicht */
@@ -159,9 +159,9 @@
   .episode .badge svg { width: 26px; height: 26px; }
   .episode h3 {
     margin: 10px 4px 0;
-    font-size: 1rem;
+    font-size: 1.05rem;
     line-height: 1.25;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    overflow-wrap: break-word;
   }
   .episode.active { background: var(--yellow); box-shadow: 0 0 0 4px var(--purple), var(--shadow); }
   .episode.active .badge { background: var(--purple); color: var(--white); }
@@ -181,8 +181,9 @@
   .player .cover { width: 96px; flex: none; border-radius: 18px; }
   .player-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
   .player-title {
-    margin: 0; font-size: 1.15rem; font-weight: 700;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin: 0; font-size: 1.15rem; font-weight: 700; line-height: 1.25;
+    overflow-wrap: break-word;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
   }
   .controls { display: flex; align-items: center; justify-content: center; gap: 18px; }
   .round {
@@ -405,8 +406,8 @@
     .player-inner { flex-direction: column; align-items: stretch; gap: 22px; width: 100%; }
     .player .cover { width: min(100%, 260px); align-self: center; border-radius: 24px; }
     .player-title {
-      white-space: normal; text-align: center; font-size: 1.3rem; line-height: 1.25;
-      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      text-align: center; font-size: 1.3rem; line-height: 1.25;
+      -webkit-line-clamp: 5;
     }
     .player-main { gap: 16px; }
     .controls { gap: 22px; }
@@ -435,8 +436,16 @@
     .tile { display: flex; align-items: center; gap: 14px; text-align: left; padding: 10px; }
     .tile .cover { width: 96px; flex: none; }
     .tile h2 { margin: 0; font-size: 1.3rem; }
-    .episodes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .episode .badge { width: 44px; height: 44px; }
+    /* Handy: Folgen als Liste – Bild links, ganzer Titel rechts */
+    .episodes { grid-template-columns: 1fr; gap: 12px; }
+    .episode { display: flex; align-items: center; gap: 14px; padding: 8px 12px 8px 8px; text-align: left; }
+    .episode .thumb { width: 104px; flex: none; }
+    .episode .text { flex: 1; min-width: 0; }
+    .episode h3 { margin: 0; font-size: 1.1rem; }
+    .episode .from { margin: 4px 0 0; }
+    .episode .badge { width: 40px; height: 40px; right: 6px; bottom: 6px; }
+    .episode .badge svg { width: 20px; height: 20px; }
+    .player-title { font-size: 1.05rem; }
     .player-inner { flex-direction: column; gap: 10px; }
     .player .cover { display: none; }
     .player-main { width: 100%; }
@@ -578,6 +587,23 @@
     return img;
   }
 
+  // Kurzer Name ohne Untertitel: "Lachlabor - Lustiges Wissen …" -> "Lachlabor"
+  function showName(p) {
+    const full = (p && p.title) || "Podcast";
+    const short = full.split(/\s+[-–—|:]\s+/)[0].trim();
+    return short.length >= 3 ? short : full;
+  }
+
+  // Folgentitel ohne den Sendungsnamen davor: "CheckPod Milchstraße | Galaxie" -> "Milchstraße – Galaxie"
+  function episodeName(p, ep) {
+    let title = (ep && ep.title) || "Folge";
+    const name = showName(p);
+    if (title.toLowerCase().indexOf(name.toLowerCase() + " ") === 0 && title.length > name.length + 3) {
+      title = title.slice(name.length).replace(/^[\s:|–-]+/, "");
+    }
+    return title.replace(/\s+\|\s+/g, " – ");
+  }
+
   // Bild der Folge, sonst das Cover des Podcasts
   function episodeImage(p, ep) {
     return safeUrl(ep.image) || safeUrl(p.image);
@@ -630,7 +656,7 @@
       tile.type = "button";
       tile.style.setProperty("--tile", "var(" + TILE_COLORS[index % TILE_COLORS.length] + ")");
       const name = el("div");
-      name.append(el("h2", null, p.title || "Podcast"));
+      name.append(el("h2", null, showName(p)));
       if (p.type === "spotify") name.append(el("span", "tag", "Spotify"));
       if (p.type === "apple") name.append(el("span", "tag", "Apple Music"));
       tile.append(cover(p.image), name);
@@ -687,7 +713,7 @@
     const ep = podcasts[pi].episodes[ei];
     const src = safeUrl(ep.video_url);
     if (!src) return;
-    openLayer(ep.title);
+    openLayer(episodeName(podcasts[pi], ep));
     const video = el("video", "layer-media");
     video.controls = true;
     video.playsInline = true;
@@ -741,12 +767,14 @@
     badge.setAttribute("aria-hidden", "true");
     thumb.append(badge);
 
-    card.append(thumb, el("h3", null, ep.title || "Folge"));
+    const text = el("div", "text");
+    text.append(el("h3", null, episodeName(p, ep)));
     if (showPodcast) {
-      const from = el("span", "from", p.title || "");
+      const from = el("span", "from", showName(p));
       from.style.setProperty("--from", "var(" + TILE_COLORS[pi % TILE_COLORS.length] + ")");
-      card.append(from);
+      text.append(from);
     }
+    card.append(thumb, text);
     card.addEventListener("click", function () {
       lastTile = card;
       if (safeUrl(ep.audio_url)) playEpisode(pi, ei);
@@ -833,7 +861,7 @@
   function renderDetail(index) {
     const p = podcasts[index];
     $("detail-cover").replaceChildren(cover(p.image));
-    $("detail-title").textContent = p.title || "Podcast";
+    $("detail-title").textContent = showName(p);
 
     episodesEl.replaceChildren();
     removeSpotify();
@@ -1065,7 +1093,7 @@
     current = { podcastIndex: pi, episodeIndex: ei };
 
     $("player-cover").replaceChildren(cover(episodeImage(p, ep)));
-    $("player-title").textContent = ep.title || "Folge";
+    $("player-title").textContent = episodeName(p, ep);
     $("player-error").hidden = true;
     playerEl.hidden = false;
     updatePlayerHeight();
@@ -1078,8 +1106,8 @@
     if ("mediaSession" in navigator) {
       const art = episodeImage(p, ep);
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: ep.title || "Folge",
-        artist: p.title || "",
+        title: episodeName(p, ep),
+        artist: showName(p),
         artwork: art ? [{ src: art, sizes: "512x512" }] : []
       });
     }
@@ -1218,7 +1246,7 @@
       renderDetail(index);
       overviewEl.hidden = true;
       detailEl.hidden = false;
-      document.title = (podcasts[index].title || "Podcast") + " – SpotiMy";
+      document.title = showName(podcasts[index]) + " – SpotiMy";
       window.scrollTo(0, 0);
       $("back").focus({ preventScroll: true });
     } else {
