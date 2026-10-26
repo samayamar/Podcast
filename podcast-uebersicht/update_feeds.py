@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin
@@ -519,7 +520,13 @@ def main() -> int:
     for url in urls:
         print(f"Lade {url} …")
         try:
-            podcast = fetch_podcast(url)
+            try:
+                podcast = fetch_podcast(url)
+            except (requests.Timeout, requests.ConnectionError):
+                # kurze Aussetzer beim Anbieter: einmal neu versuchen
+                print("  Keine Antwort, neuer Versuch …")
+                time.sleep(3)
+                podcast = fetch_podcast(url)
         except Exception as exc:  # noqa: BLE001 – ein Fehler soll den Lauf nicht abbrechen
             if isinstance(exc, requests.Timeout):
                 message = f"Zeitüberschreitung nach {TIMEOUT} Sekunden"
