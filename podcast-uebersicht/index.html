@@ -265,6 +265,17 @@
     background: var(--white);
     box-shadow: var(--shadow);
   }
+  /* Spotify-Folge: kompakter Spotify-Player unten fest, wie der eigene Player */
+  .spotify-frame.album {
+    position: fixed;
+    left: 50%; bottom: 0; z-index: 10;
+    transform: translateX(-50%);
+    width: min(100%, 1100px);
+    height: 152px; min-height: 0; max-height: none;
+    margin: 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -6px 24px rgba(43, 33, 71, .25);
+  }
   .tile .tag {
     display: inline-block;
     margin-top: 6px;
@@ -377,6 +388,9 @@
   let podcasts = [];
   let lastTile = null;
   let current = null; // { podcastIndex, episodeIndex }
+  let spotifyCurrent = null; // im Spotify-Player geöffnete Folge { pi, ei }
+  let pendingSpotify = null; // aus der Suche gewählte Spotify-Folge
+  let spotifyUsed = false; // in dieser Detailansicht wurde ein Spotify-Player geladen
   let seeking = false;
 
   // Element mit reinem Text erzeugen (Feed-Inhalte nie als HTML einfügen)
@@ -463,7 +477,10 @@
       from.style.setProperty("--from", "var(" + TILE_COLORS[pi % TILE_COLORS.length] + ")");
       card.append(from);
     }
-    card.addEventListener("click", function () { playEpisode(pi, ei); });
+    card.addEventListener("click", function () {
+      if (safeUrl(ep.audio_url)) playEpisode(pi, ei);
+      else openSpotifyEpisode(pi, ei);
+    });
     li.append(card);
     return li;
   }
@@ -486,7 +503,7 @@
     searchIndex = [];
     podcasts.forEach(function (p, pi) {
       (p.episodes || []).forEach(function (ep, ei) {
-        if (!safeUrl(ep.audio_url)) return;
+        if (!isPlayable(ep)) return;
         searchIndex.push({
           pi: pi, ei: ei,
           title: normalize(ep.title),
@@ -546,31 +563,66 @@
     episodesEl.replaceChildren();
     removeSpotify();
 
-    // Spotify-Serien: Spotify-Player erst jetzt laden (keine Spotify-Skripte auf der Startseite)
-    const embed = spotifyEmbedUrl(p.embed_url);
-    if (p.type === "spotify") {
-      if (embed) {
-        audio.pause(); // nicht zwei Player gleichzeitig
-        const frame = el("iframe", "spotify-frame");
-        frame.id = "spotify-frame";
-        frame.src = embed;
-        frame.title = "Spotify-Player: " + (p.title || "");
-        frame.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
-        frame.loading = "lazy";
-        detailEl.append(frame);
-        document.body.classList.add("spotify-mode");
-        updatePlayerHeight();
-      }
+    (p.episodes || []).slice(0, 20).forEach(function (ep, i) {
+      if (isPlayable(ep)) episodesEl.append(episodeCard(index, i, false));
+    });
+
+    // Spotify ohne einzelne Folgen: Spotify-Player des Künstlers zeigen.
+    // Er wird erst jetzt geladen – keine Spotify-Inhalte auf der Startseite.
+    if (p.type === "spotify" && !episodesEl.children.length) {
+      const embed = spotifyEmbedUrl(p.embed_url);
+      if (embed) showSpotify(embed, p.title, false);
       return;
     }
-
-    (p.episodes || []).slice(0, 20).forEach(function (ep, i) {
-      if (safeUrl(ep.audio_url)) episodesEl.append(episodeCard(index, i, false));
-    });
 
     if (!episodesEl.children.length) {
       episodesEl.append(el("li", "notice", "Hier gibt es noch keine Folgen."));
     }
+
+    // Aus der Suche heraus gewählte Spotify-Folge öffnen
+    if (pendingSpotify && pendingSpotify.pi === index) {
+      const pending = pendingSpotify;
+      pendingSpotify = null;
+      openSpotifyEpisode(pending.pi, pending.ei);
+    }
+    updateCards();
+  }
+
+  function isPlayable(ep) {
+    return Boolean(safeUrl(ep.audio_url) || spotifyEmbedUrl(ep.embed_url));
+  }
+
+  // Spotify-Player über der Folgenliste anzeigen (bzw. die Folge darin wechseln)
+  function showSpotify(embed, title, album) {
+    audio.pause(); // nicht zwei Player gleichzeitig
+    // Immer ein neues iframe statt src zu ändern – das hält den Browserverlauf sauber
+    const old = $("spotify-frame");
+    const frame = el("iframe", "spotify-frame");
+    frame.id = "spotify-frame";
+    frame.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+    frame.classList.toggle("album", album);
+    frame.title = "Spotify-Player: " + (title || "");
+    frame.src = embed;
+    if (old) old.replaceWith(frame);
+    else detailEl.insertBefore(frame, episodesEl);
+    spotifyUsed = true;
+    document.body.classList.add("spotify-mode");
+    updatePlayerHeight();
+    return frame;
+  }
+
+  function openSpotifyEpisode(pi, ei) {
+    const ep = podcasts[pi].episodes[ei];
+    const embed = spotifyEmbedUrl(ep.embed_url);
+    if (!embed) return;
+    // Aus der Suche: erst zur Detailansicht des Podcasts wechseln
+    if (location.hash !== "#podcast-" + pi) {
+      pendingSpotify = { pi: pi, ei: ei };
+      location.hash = "podcast-" + pi;
+      return;
+    }
+    spotifyCurrent = { pi: pi, ei: ei };
+    showSpotify(embed, ep.title, true);
     updateCards();
   }
 
@@ -583,6 +635,7 @@
   function removeSpotify() {
     const frame = $("spotify-frame");
     if (frame) frame.remove();
+    spotifyCurrent = null;
     document.body.classList.remove("spotify-mode");
     updatePlayerHeight();
   }
@@ -675,7 +728,10 @@
   function updateCards() {
     const playing = !audio.paused && !audio.ended;
     document.querySelectorAll(".episode").forEach(function (card) {
-      const active = isCurrent(Number(card.dataset.podcast), Number(card.dataset.episode));
+      const pi = Number(card.dataset.podcast);
+      const ei = Number(card.dataset.episode);
+      const active = isCurrent(pi, ei) ||
+        Boolean(spotifyCurrent && spotifyCurrent.pi === pi && spotifyCurrent.ei === ei);
       card.classList.toggle("active", active);
       card.setAttribute("aria-label",
         (active && playing ? "Pause: " : "Abspielen: ") + card.querySelector("h3").textContent);
@@ -685,7 +741,9 @@
   }
 
   function updatePlayerHeight() {
-    const h = playerEl.hidden || document.body.classList.contains("spotify-mode") ? 0 : playerEl.offsetHeight;
+    const albumFrame = document.querySelector(".spotify-frame.album");
+    const h = albumFrame ? albumFrame.offsetHeight
+      : playerEl.hidden || document.body.classList.contains("spotify-mode") ? 0 : playerEl.offsetHeight;
     document.documentElement.style.setProperty("--player-h", h + "px");
   }
 
@@ -744,6 +802,7 @@
       $("back").focus({ preventScroll: true });
     } else {
       removeSpotify(); // stoppt auch die Spotify-Wiedergabe
+      spotifyUsed = false;
       detailEl.hidden = true;
       overviewEl.hidden = false;
       document.title = "SpotiMy";
@@ -752,7 +811,12 @@
   }
 
   $("back").addEventListener("click", function () {
-    if (history.length > 1 && /^#podcast-/.test(location.hash)) {
+    if (spotifyUsed) {
+      // Der Spotify-Player legt eigene Einträge im Browserverlauf an, history.back()
+      // würde nur darin zurückspringen. Deshalb den Eintrag direkt durch die Übersicht ersetzen.
+      history.replaceState(null, "", location.pathname + location.search);
+      route();
+    } else if (history.length > 1 && /^#podcast-/.test(location.hash)) {
       history.back();
     } else {
       location.hash = "";

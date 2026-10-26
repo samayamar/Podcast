@@ -43,6 +43,10 @@ jobs:
 
       - name: Feeds einlesen
         run: python update_feeds.py
+        env:
+          # optional: lädt bei Spotify-Künstlern die einzelnen Folgen (Alben)
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
 
       - name: Seite zusammenstellen
         run: |

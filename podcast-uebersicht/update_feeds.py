@@ -234,11 +234,125 @@ SPOTIFY_RE = re.compile(
 )
 
 
-def fetch_spotify(url: str, kind: str, spotify_id: str) -> dict:
-    """Spotify-Link: Titel und Bild über Spotifys öffentliches oEmbed holen.
+SPOTIFY_API = "https://api.spotify.com/v1"
+SPOTIFY_PAGE = 10  # mehr erlaubt Spotify im Development Mode nicht
+SPOTIFY_MAX_PAGES = 10
 
-    Folgen gibt es keine – abgespielt wird im eingebetteten Spotify-Player.
+
+def spotify_token() -> str | None:
+    """Zugangs-Token mit SPOTIFY_CLIENT_ID/SPOTIFY_CLIENT_SECRET (z. B. GitHub-Secrets) holen."""
+    client_id = os.environ.get("SPOTIFY_CLIENT_ID")
+    client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
+    if not (client_id and client_secret):
+        return None
+    response = requests.post(
+        "https://accounts.spotify.com/api/token",
+        data={"grant_type": "client_credentials"},
+        auth=(client_id, client_secret),
+        headers={"User-Agent": USER_AGENT},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    return response.json()["access_token"]
+
+
+def spotify_image(images: list | None, wanted: int = 300) -> str | None:
+    """Das Bild wählen, das der gewünschten Breite am nächsten kommt."""
+    images = [i for i in images or [] if i.get("url")]
+    if not images:
+        return None
+    return min(images, key=lambda i: abs((i.get("width") or wanted) - wanted))["url"]
+
+
+def spotify_date(value: str | None) -> str | None:
+    """Spotify-Datum (Jahr, Jahr-Monat oder Tag) in ISO-8601 umwandeln."""
+    if not value:
+        return None
+    parts = (value.split("-") + ["01", "01"])[:3]
+    try:
+        return datetime(int(parts[0]), int(parts[1]), int(parts[2]), tzinfo=timezone.utc).isoformat()
+    except ValueError:
+        return None
+
+
+def fetch_spotify_artist_albums(token: str, artist_id: str) -> tuple[dict, list[dict]]:
+    """Künstler und seine Alben (= Folgen) laden.
+
+    Der direkte Abruf der Künstler-Alben liefert im Development Mode nichts,
+    deshalb wird über die Suche mit Künstlerfilter gesucht.
     """
+    headers = {"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT}
+    response = requests.get(f"{SPOTIFY_API}/artists/{artist_id}", headers=headers, timeout=TIMEOUT)
+    response.raise_for_status()
+    artist = response.json()
+
+    albums = {}
+    for page in range(SPOTIFY_MAX_PAGES):
+        response = requests.get(
+            f"{SPOTIFY_API}/search",
+            params={
+                "q": f'artist:"{artist["name"]}"',
+                "type": "album",
+                "market": "DE",
+                "limit": SPOTIFY_PAGE,
+                "offset": page * SPOTIFY_PAGE,
+            },
+            headers=headers,
+            timeout=TIMEOUT,
+        )
+        response.raise_for_status()
+        result = response.json()["albums"]
+        for album in result["items"]:
+            if album and any(a.get("id") == artist_id for a in album.get("artists", [])):
+                albums[album["id"]] = album
+        if not result.get("next"):
+            break
+    return artist, list(albums.values())
+
+
+def spotify_episodes(albums: list[dict]) -> list[dict]:
+    episodes = []
+    for album in albums:
+        # Zweisprachige Ausgaben ("Titel / Title") auslassen
+        if " / " in album.get("name", ""):
+            continue
+        episodes.append({
+            "title": clean_text(album.get("name")) or "Ohne Titel",
+            "published": spotify_date(album.get("release_date")),
+            "duration": None,
+            "summary": "",
+            "link": f"https://open.spotify.com/album/{album['id']}",
+            "audio_url": None,
+            "embed_url": f"https://open.spotify.com/embed/album/{album['id']}",
+            "image": spotify_image(album.get("images")),
+        })
+    episodes.sort(key=lambda e: e["published"] or "", reverse=True)
+    return episodes
+
+
+def fetch_spotify(url: str, kind: str, spotify_id: str) -> dict:
+    """Spotify-Link als eingebetteter Spotify-Player.
+
+    Mit Spotify-Zugangsdaten werden bei Künstlern die Alben als einzelne Folgen geladen,
+    sonst nur Titel und Bild über Spotifys öffentliches oEmbed.
+    """
+    token = spotify_token() if kind == "artist" else None
+    if token:
+        artist, albums = fetch_spotify_artist_albums(token, spotify_id)
+        episodes = spotify_episodes(albums)
+        return {
+            "type": "spotify",
+            "title": clean_text(artist.get("name")) or "Spotify",
+            "description": "",
+            "link": f"https://open.spotify.com/artist/{spotify_id}",
+            "image": spotify_image(artist.get("images"), 640),
+            "embed_url": f"https://open.spotify.com/embed/artist/{spotify_id}",
+            "feed_url": url,
+            "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "episode_count": len(episodes),
+            "episodes": episodes[:MAX_EPISODES],
+        }
+
     response = requests.get(
         "https://open.spotify.com/oembed",
         params={"url": f"https://open.spotify.com/{kind}/{spotify_id}"},
@@ -355,7 +469,7 @@ def main() -> int:
                 podcasts.append(previous[url])
             continue
         podcasts.append(podcast)
-        if podcast.get("type") == "spotify":
+        if podcast.get("type") == "spotify" and not podcast["episodes"]:
             print(f"  OK: {podcast['title']} (Spotify-Player)")
         else:
             print(f"  OK: {podcast['title']} ({podcast['episode_count']} Folgen)")
