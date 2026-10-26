@@ -14,6 +14,9 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
    Spotify-Links (`https://open.spotify.com/artist/…`, `…/album/…`, `…/show/…`, `…/playlist/…`) erscheinen als Kachel mit eingebettetem Spotify-Player. Ganze Folgen gibt es dort nur, wenn man im Browser bei Spotify angemeldet ist, sonst 30-Sekunden-Ausschnitte. Der Spotify-Player wird erst geladen, wenn man die Kachel antippt.
    Mit Spotify-Zugangsdaten (`SPOTIFY_CLIENT_ID` und `SPOTIFY_CLIENT_SECRET` als Umgebungsvariablen bzw. GitHub-Secrets, App auf developer.spotify.com, Besitzer braucht Premium) lädt das Skript bei Spotify-Künstlern die einzelnen Folgen (Alben). Sie erscheinen dann wie die anderen Folgen als Bildkacheln und öffnen sich im Spotify-Player.
    Apple-Music-Künstler (`https://music.apple.com/de/artist/…/ID`) werden über Apples öffentliche iTunes-Suche eingelesen, ohne Zugangsdaten. Die Alben erscheinen als Folgen-Kacheln und spielen im eingebetteten Apple-Music-Player: ganze Folgen mit Apple-Music-Abo (im Player anmelden), sonst Vorschau. Zweisprachige Ausgaben und Sammelboxen werden ausgelassen.
+   **Videos** aus den Mediatheken (ARD, ZDF, KiKA – über das freie Verzeichnis MediathekViewWeb): `video: Sendung | Sender | Anzeigename`, z. B. `video: Die Sendung mit der Maus | KiKA`. Sender und Anzeigename sind optional. Fassungen mit Audiodeskription/Gebärdensprache werden ausgelassen, Vorschaubilder kommen von der Mediathek-Seite der Folge. Die Sender dürfen Videos nur befristet anbieten, manche nur in Deutschland.
+   **Spiele** von kika.de: `spiele: <Link zu einer Spiele-Seite oder einem Spiel>`. Spiele, die KiKA einbetten lässt, laufen in SpotiMy, die anderen öffnen sich bei kika.de.
+   Die Startseite zeigt ein Hauptmenü mit **Podcasts, Videos und Spiele** (Bereiche ohne Inhalt werden ausgeblendet).
 2. **Feeds einlesen:**
    ```
    python update_feeds.py

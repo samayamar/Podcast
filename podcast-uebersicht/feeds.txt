@@ -29,3 +29,13 @@ https://www.kakadu.de/kakadu-104.xml
 https://www.ndr.de/nachrichten/info/sendungen/mikado/mikado_am_morgen/podcast4223.xml
 
 # Weitere Feeds hier eintragen
+
+# ---------- Videos (aus den Mediatheken von ARD/ZDF/KiKA, über MediathekViewWeb) ----------
+# Format: video: Sendung | Sender | Anzeigename (Sender und Anzeigename sind optional)
+video: Die Sendung mit der Maus | KiKA
+video: Wissen macht Ah! | KiKA
+video: Checker Reportagen | KiKA | Checker Welt
+
+# ---------- Spiele von kika.de ----------
+# Format: spiele: Link zu einer Spiele-Seite oder einem einzelnen Spiel bei kika.de
+spiele: https://www.kika.de/check-die-ki/spiele/spiele-code-knacken-und-programmieren-lernen-100

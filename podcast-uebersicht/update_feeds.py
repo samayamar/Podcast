@@ -436,6 +436,199 @@ def fetch_apple_artist(url: str, country: str, artist_id: str) -> dict:
     }
 
 
+# ---------- Videos aus den Mediatheken (über MediathekViewWeb) ----------
+
+MEDIATHEK_API = "https://mediathekviewweb.de/api/query"
+# Fassungen, die wir nicht doppelt zeigen wollen
+VIDEO_SKIP_RE = re.compile(
+    r"audiodeskription|gebärdensprache|\(ad\)|hörfassung|klare sprache|\(ov\)|trailer", re.IGNORECASE
+)
+OG_IMAGE_RE = re.compile(
+    r"<meta[^>]+(?:property|name)=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']"
+    r"|<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+(?:property|name)=[\"']og:image[\"']",
+    re.IGNORECASE,
+)
+_https_ok: dict[str, bool] = {}
+
+
+def page_image(url: str | None) -> str | None:
+    """Vorschaubild (og:image) einer Webseite, z. B. der Mediathek-Seite einer Folge."""
+    if not url:
+        return None
+    try:
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0 " + USER_AGENT}, timeout=TIMEOUT)
+        match = OG_IMAGE_RE.search(response.text)
+    except requests.RequestException:
+        return None
+    if not match:
+        return None
+    return urljoin(url, html.unescape(match.group(1) or match.group(2)))
+
+
+def prefer_https(url: str) -> str:
+    """http-Videoadressen auf https umstellen, wenn der Server das kann (sonst blockiert Safari sie)."""
+    if not url.startswith("http://"):
+        return url
+    host = url.split("/")[2]
+    if host not in _https_ok:
+        try:
+            r = requests.head("https://" + url[7:], timeout=TIMEOUT, allow_redirects=True,
+                              headers={"User-Agent": USER_AGENT})
+            _https_ok[host] = r.status_code < 400
+        except requests.RequestException:
+            _https_ok[host] = False
+    return "https://" + url[7:] if _https_ok[host] else url
+
+
+def fetch_mediathek_videos(line: str, spec: str) -> dict:
+    """Zeile "video: Sendung | Kanal | Anzeigename" – die neuesten Videos einer Sendung."""
+    parts = [part.strip() for part in spec.split("|")]
+    topic = parts[0]
+    channel = parts[1] if len(parts) > 1 and parts[1] else None
+    title = parts[2] if len(parts) > 2 and parts[2] else topic
+    if not topic:
+        raise ValueError("Keine Sendung angegeben (Beispiel: video: Die Sendung mit der Maus | KiKA)")
+
+    queries = [{"fields": ["topic"], "query": topic}]
+    if channel:
+        queries.append({"fields": ["channel"], "query": channel})
+    body = {"queries": queries, "sortBy": "timestamp", "sortOrder": "desc", "future": False,
+            "offset": 0, "size": 80, "duration_min": 120}
+    response = requests.post(
+        MEDIATHEK_API, data=json.dumps(body),
+        headers={"User-Agent": USER_AGENT, "Content-Type": "text/plain"}, timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    results = (response.json().get("result") or {}).get("results") or []
+
+    episodes, seen = [], set()
+    for item in results:
+        if (item.get("topic") or "").casefold() != topic.casefold():
+            continue
+        if channel and (item.get("channel") or "").casefold() != channel.casefold():
+            continue
+        name = clean_text(item.get("title"))
+        if not name or not item.get("url_video") or VIDEO_SKIP_RE.search(name) or name in seen:
+            continue
+        seen.add(name)
+        episodes.append({
+            "title": name,
+            "published": datetime.fromtimestamp(int(item.get("timestamp") or 0), tz=timezone.utc).isoformat(),
+            "duration": normalize_duration(str(item.get("duration") or "")),
+            "summary": shorten(clean_text(item.get("description"))),
+            "link": item.get("url_website"),
+            "audio_url": None,
+            "video_url": prefer_https(item["url_video"]),
+            "image": None,
+        })
+        if len(episodes) >= MAX_EPISODES:
+            break
+    if not episodes:
+        raise ValueError(f"Keine Videos zu „{topic}“ gefunden")
+
+    for episode in episodes:
+        episode["image"] = page_image(episode["link"])
+
+    return {
+        "type": "video",
+        "title": title,
+        "description": "",
+        "link": None,
+        "image": next((e["image"] for e in episodes if e["image"]), None),
+        "feed_url": line,
+        "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "episode_count": len(episodes),
+        "episodes": episodes,
+    }
+
+
+# ---------- Spiele von kika.de ----------
+
+KIKA = "https://www.kika.de"
+_embeddable: dict[str, bool] = {}
+
+
+def kika_api(path: str) -> dict:
+    response = requests.get(f"{KIKA}/ackley/v1/{path}", headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT)
+    response.raise_for_status()
+    return response.json()
+
+
+def kika_image(teaser_image: dict | None) -> str | None:
+    scheme = (teaser_image or {}).get("urlScheme")
+    if not scheme:
+        return None
+    return urljoin(KIKA, scheme.replace("**imageVariant**", "ident").replace("**width**", "512"))
+
+
+def can_embed(url: str) -> bool:
+    """Darf die Seite in einem iframe auf einer fremden Seite laufen?"""
+    if url not in _embeddable:
+        try:
+            headers = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT).headers
+            csp = headers.get("Content-Security-Policy", "")
+            ancestors = re.search(r"frame-ancestors([^;]*)", csp)
+            _embeddable[url] = not headers.get("X-Frame-Options") and (
+                not ancestors or "*" in ancestors.group(1).split()
+            )
+        except requests.RequestException:
+            _embeddable[url] = False
+    return _embeddable[url]
+
+
+def kika_game(game_id: str) -> dict | None:
+    data = kika_api(f"interactives/{game_id}")
+    if data.get("contentCategory") != "games" or not data.get("contentUrl"):
+        return None
+    game_url = urljoin(KIKA, data["contentUrl"])
+    return {
+        "title": clean_text(data.get("title")) or "Spiel",
+        "published": data.get("date"),
+        "duration": None,
+        "summary": shorten(clean_text(data.get("teaserText"))),
+        "link": f"{KIKA}{data.get('urlPath', '')}/{game_id}",
+        "audio_url": None,
+        "game_url": game_url,
+        "embeddable": can_embed(game_url),
+        "width": data.get("contentWidth"),
+        "height": data.get("contentHeight"),
+        "image": kika_image(data.get("teaserImage")),
+    }
+
+
+def fetch_kika_games(line: str, url: str) -> dict:
+    """Zeile "spiele: <kika.de-Link>" – eine Spiele-Rubrik oder ein einzelnes Spiel."""
+    if not re.match(r"^https://(www\.)?kika\.de/", url):
+        raise ValueError("Bitte einen Link von kika.de angeben")
+    page_id = url.split("?")[0].rstrip("/").split("/")[-1]
+
+    game_ids = []
+    try:
+        for page in range(5):
+            data = kika_api(f"subchannels/{page_id}/teasers?page={page}&platform=kikade")
+            game_ids += [c["id"] for c in data.get("content", [])
+                         if c.get("docType") == "interactiveContent" and c.get("contentCategory") == "games"]
+            if not (data.get("links") or {}).get("next"):
+                break
+    except requests.HTTPError:
+        game_ids = [page_id]  # kein Rubrik-Link, sondern ein einzelnes Spiel
+
+    games = [g for g in (kika_game(gid) for gid in dict.fromkeys(game_ids)) if g]
+    if not games:
+        raise ValueError("Auf der Seite wurden keine Spiele gefunden")
+    return {
+        "type": "games",
+        "title": "KiKA-Spiele",
+        "description": "",
+        "link": url,
+        "image": games[0]["image"],
+        "feed_url": line,
+        "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "episode_count": len(games),
+        "episodes": games,
+    }
+
+
 def fetch_podcast(url: str) -> dict:
     """Einen Feed abrufen und auswerten. Wirft bei Fehlern eine Exception.
 
@@ -444,6 +637,11 @@ def fetch_podcast(url: str) -> dict:
     Spotify-Links werden als eingebetteter Spotify-Player übernommen,
     Apple-Music-Künstler als Folgen mit eingebettetem Apple-Music-Player.
     """
+    if url.lower().startswith("video:"):
+        return fetch_mediathek_videos(url, url[6:].strip())
+    if url.lower().startswith("spiele:"):
+        return fetch_kika_games(url, url[7:].strip())
+
     apple = APPLE_ARTIST_RE.match(url)
     if apple:
         return fetch_apple_artist(url, apple.group(1), apple.group(2))
@@ -544,8 +742,10 @@ def main() -> int:
         if podcast.get("type") == "spotify" and not podcast["episodes"]:
             print(f"  OK: {podcast['title']} (Spotify-Player)")
         else:
-            print(f"  OK: {podcast['title']} ({podcast['episode_count']} Folgen)")
-        insecure = sum(1 for e in podcast["episodes"] if (e.get("audio_url") or "").startswith("http://"))
+            unit = {"video": "Videos", "games": "Spiele"}.get(podcast.get("type"), "Folgen")
+            print(f"  OK: {podcast['title']} ({podcast['episode_count']} {unit})")
+        insecure = sum(1 for e in podcast["episodes"]
+                       if (e.get("audio_url") or e.get("video_url") or "").startswith("http://"))
         if insecure:
             print(f"  Hinweis: {insecure} Folgen nur über http:// – Browser blockieren sie auf https-Seiten evtl.")
 
