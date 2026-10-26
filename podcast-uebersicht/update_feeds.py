@@ -161,11 +161,84 @@ def download(url: str) -> requests.Response:
     return response
 
 
+ARD_SHOW_RE = re.compile(r"(urn:ard:show:[0-9a-f]+)", re.IGNORECASE)
+ARD_API = "https://api.ardaudiothek.de/graphql"
+ARD_QUERY = """
+query ($id: ID!, $first: Int!) {
+  programSet(id: $id) {
+    title synopsis sharingUrl numberOfElements
+    image { url }
+    items(first: $first) {
+      nodes { title summary publishDate duration sharingUrl image { url } audios { url mimeType } }
+    }
+  }
+}
+"""
+
+
+def ard_image(image) -> str | None:
+    """ARD-Bildadressen enthalten einen Platzhalter für die Breite."""
+    url = (image or {}).get("url")
+    return url.replace("{width}", "512") if url else None
+
+
+def fetch_ard_show(url: str, show_id: str) -> dict:
+    """Sendung aus ARD Sounds / ARD Audiothek über deren öffentliche Schnittstelle laden."""
+    response = requests.post(
+        ARD_API,
+        json={"query": ARD_QUERY, "variables": {"id": show_id, "first": MAX_EPISODES * 2}},
+        headers={"User-Agent": USER_AGENT},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    data = response.json()
+    if data.get("errors"):
+        raise ValueError(f"ARD-Schnittstelle: {data['errors'][0].get('message')}")
+    show = (data.get("data") or {}).get("programSet")
+    if not show:
+        raise ValueError("Sendung bei ARD nicht gefunden")
+
+    episodes = []
+    for item in (show.get("items") or {}).get("nodes") or []:
+        audios = [a.get("url") for a in item.get("audios") or [] if a.get("url")]
+        published = item.get("publishDate")
+        try:
+            published = datetime.fromisoformat(published).astimezone(timezone.utc).isoformat()
+        except (TypeError, ValueError):
+            published = None
+        episodes.append({
+            "title": clean_text(item.get("title")) or "Ohne Titel",
+            "published": published,
+            "duration": normalize_duration(str(item["duration"])) if item.get("duration") else None,
+            "summary": shorten(clean_text(item.get("summary"))),
+            "link": item.get("sharingUrl"),
+            "audio_url": audios[0] if audios else None,
+            "image": ard_image(item.get("image")),
+        })
+    episodes.sort(key=lambda e: e["published"] or "", reverse=True)
+
+    return {
+        "title": clean_text(show.get("title")) or url,
+        "description": clean_text(show.get("synopsis")),
+        "link": show.get("sharingUrl") or url,
+        "image": ard_image(show.get("image")),
+        "feed_url": url,
+        "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "episode_count": show.get("numberOfElements") or len(episodes),
+        "episodes": episodes[:MAX_EPISODES],
+    }
+
+
 def fetch_podcast(url: str) -> dict:
     """Einen Feed abrufen und auswerten. Wirft bei Fehlern eine Exception.
 
     Ist die Adresse eine Webseite statt eines Feeds, wird der dort verlinkte Feed verwendet.
+    Sendungsseiten von ARD Sounds / ARD Audiothek werden über die ARD-Schnittstelle geladen.
     """
+    ard = ARD_SHOW_RE.search(url)
+    if ard and re.search(r"ard(sounds|audiothek)\.de", url, re.IGNORECASE):
+        return fetch_ard_show(url, ard.group(1))
+
     response = download(url)
     parsed = feedparser.parse(response.content)
 

@@ -5,6 +5,10 @@ on:
 jobs:
   diag:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: podcast-uebersicht
     steps:
       - uses: actions/checkout@v4
-      - run: pip install requests && python diag/diag.py
+      - run: pip install feedparser requests && python update_feeds.py
+      - run: python -c "import json;d=json.load(open('data/podcasts.json'));[print(p['title'],p['episode_count'],p['image'],json.dumps(p['episodes'][:2],ensure_ascii=False)) for p in d['podcasts']]"
