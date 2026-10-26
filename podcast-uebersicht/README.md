@@ -10,6 +10,7 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
 ## Benutzung
 
 1. **Feeds eintragen:** Feed-Adressen in `feeds.txt` eintragen, eine pro Zeile. Leere Zeilen und Zeilen mit `#` am Anfang werden ignoriert.
+   Statt einer Feed-Adresse geht auch eine Webseite, die einen Feed verlinkt, oder eine Sendungsseite bei ARD Sounds bzw. ARD Audiothek (`…/sendung/…/urn:ard:show:…`).
 2. **Feeds einlesen:**
    ```
    python update_feeds.py
