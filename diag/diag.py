@@ -1,18 +1,18 @@
-import requests, time, socket
-UA = {"User-Agent": "PodcastUebersicht/1.0"}
-for host in ["schlaulicht.info", "www.schlaulicht.info"]:
-    try: print(host, "->", socket.gethostbyname(host))
-    except Exception as e: print(host, "DNS-Fehler", e)
-for u in ["https://schlaulicht.info/feed/m4a/", "http://schlaulicht.info/feed/m4a/", "https://www.schlaulicht.info/feed/m4a/", "https://schlaulicht.info/feed/mp3/", "https://schlaulicht.info/"]:
-    try:
-        r = requests.get(u, headers=UA, timeout=20); print(u, r.status_code, r.headers.get("Content-Type"), len(r.content))
-    except Exception as e: print(u, "FEHLER", type(e).__name__, str(e)[:150])
-r = requests.get("https://itunes.apple.com/search", params={"media": "podcast", "term": "Schlaulicht", "country": "DE", "limit": 5}, headers=UA, timeout=15)
-for x in r.json().get("results", []): print(" iTunes:", x.get("collectionName"), "|", x.get("artistName"), "|", x.get("trackCount"), "|", x.get("feedUrl"))
-q = '{ programSet(id: "urn:ard:show:b4a27641ebfcb11b") { title numberOfElements items(first: 40) { nodes { title } } } }'
-for i in range(2):
-    t = time.time()
-    try:
-        r = requests.post("https://api.ardaudiothek.de/graphql", json={"query": q}, headers=UA, timeout=40)
-        print("ARD Maus:", r.status_code, round(time.time() - t, 1), "s", r.text[:150])
-    except Exception as e: print("ARD Maus FEHLER", round(time.time() - t, 1), "s", e)
+import requests, json
+UA = {"User-Agent": "PodcastUebersicht/1.0", "Content-Type": "text/plain"}
+def q(channel, topic, size=5):
+    body = {"queries": [{"fields": ["channel"], "query": channel}, {"fields": ["topic"], "query": topic}],
+            "sortBy": "timestamp", "sortOrder": "desc", "future": False, "offset": 0, "size": size, "duration_min": 120}
+    r = requests.post("https://mediathekviewweb.de/api/query", data=json.dumps(body), headers=UA, timeout=20)
+    print(f"\n== {channel} / {topic}: {r.status_code}")
+    res = r.json().get("result") or {}
+    print("   gefunden:", (res.get("queryInfo") or {}).get("totalResults"))
+    for x in res.get("results", []):
+        print("  -", x.get("topic"), "|", x.get("title"), "|", x.get("duration"), "s |", x.get("url_video")[:90] if x.get("url_video") else None, "| HD:", bool(x.get("url_video_hd")))
+    return res.get("results", [])
+for ch, t in [("KiKA", "Checker Tobi"), ("KiKA", "Die Sendung mit der Maus"), ("KiKA", "logo!"), ("KiKA", "Wissen macht Ah!"), ("KiKA", "Löwenzahn")]:
+    items = q(ch, t)
+if items:
+    u = items[0]["url_video"]
+    r = requests.head(u, headers={"User-Agent": "Mozilla/5.0"}, timeout=20, allow_redirects=True)
+    print("\nHEAD", u[:80], r.status_code, r.headers.get("Content-Type"), r.headers.get("Content-Length"), r.headers.get("Access-Control-Allow-Origin"))
