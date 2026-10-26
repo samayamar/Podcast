@@ -229,12 +229,49 @@ def fetch_ard_show(url: str, show_id: str) -> dict:
     }
 
 
+SPOTIFY_RE = re.compile(
+    r"^https://open\.spotify\.com/(?:intl-[a-z]+/)?(artist|album|show|playlist|episode)/([A-Za-z0-9]+)"
+)
+
+
+def fetch_spotify(url: str, kind: str, spotify_id: str) -> dict:
+    """Spotify-Link: Titel und Bild über Spotifys öffentliches oEmbed holen.
+
+    Folgen gibt es keine – abgespielt wird im eingebetteten Spotify-Player.
+    """
+    response = requests.get(
+        "https://open.spotify.com/oembed",
+        params={"url": f"https://open.spotify.com/{kind}/{spotify_id}"},
+        headers={"User-Agent": USER_AGENT},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    info = response.json()
+    return {
+        "type": "spotify",
+        "title": clean_text(info.get("title")) or "Spotify",
+        "description": "",
+        "link": f"https://open.spotify.com/{kind}/{spotify_id}",
+        "image": info.get("thumbnail_url"),
+        "embed_url": f"https://open.spotify.com/embed/{kind}/{spotify_id}",
+        "feed_url": url,
+        "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "episode_count": None,
+        "episodes": [],
+    }
+
+
 def fetch_podcast(url: str) -> dict:
     """Einen Feed abrufen und auswerten. Wirft bei Fehlern eine Exception.
 
     Ist die Adresse eine Webseite statt eines Feeds, wird der dort verlinkte Feed verwendet.
     Sendungsseiten von ARD Sounds / ARD Audiothek werden über die ARD-Schnittstelle geladen.
+    Spotify-Links werden als eingebetteter Spotify-Player übernommen.
     """
+    spotify = SPOTIFY_RE.match(url)
+    if spotify:
+        return fetch_spotify(url, spotify.group(1), spotify.group(2))
+
     ard = ARD_SHOW_RE.search(url)
     if ard and re.search(r"ard(sounds|audiothek)\.de", url, re.IGNORECASE):
         return fetch_ard_show(url, ard.group(1))
@@ -318,7 +355,10 @@ def main() -> int:
                 podcasts.append(previous[url])
             continue
         podcasts.append(podcast)
-        print(f"  OK: {podcast['title']} ({podcast['episode_count']} Folgen)")
+        if podcast.get("type") == "spotify":
+            print(f"  OK: {podcast['title']} (Spotify-Player)")
+        else:
+            print(f"  OK: {podcast['title']} ({podcast['episode_count']} Folgen)")
 
     write_json(
         {
