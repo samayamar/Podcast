@@ -474,14 +474,13 @@ def main() -> int:
         else:
             print(f"  OK: {podcast['title']} ({podcast['episode_count']} Folgen)")
 
-    data = {
-        "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "podcasts": podcasts,
-    }
-    # Die Client-ID ist öffentlich (das Secret nicht!). Die Seite braucht sie für den Spotify-Login.
-    if os.environ.get("SPOTIFY_CLIENT_ID"):
-        data["spotify_client_id"] = os.environ["SPOTIFY_CLIENT_ID"]
-    write_json(data, OUTPUT_FILE)
+    write_json(
+        {
+            "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "podcasts": podcasts,
+        },
+        OUTPUT_FILE,
+    )
 
     print()
     print("Zusammenfassung")
