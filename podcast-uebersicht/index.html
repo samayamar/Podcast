@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src https: http: data:; media-src https: http:">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#fff4d6">
-<title>Podcasts</title>
+<title>SpotiMy</title>
 <style>
   :root {
     color-scheme: light;
@@ -278,7 +278,7 @@
 </head>
 <body>
 <header>
-  <h1>🎧 Podcasts</h1>
+  <h1>🎧 SpotiMy</h1>
 </header>
 
 <main>
@@ -680,13 +680,13 @@
       renderDetail(index);
       overviewEl.hidden = true;
       detailEl.hidden = false;
-      document.title = (podcasts[index].title || "Podcast") + " – Podcasts";
+      document.title = (podcasts[index].title || "Podcast") + " – SpotiMy";
       window.scrollTo(0, 0);
       $("back").focus({ preventScroll: true });
     } else {
       detailEl.hidden = true;
       overviewEl.hidden = false;
-      document.title = "Podcasts";
+      document.title = "SpotiMy";
       if (lastTile) lastTile.focus();
     }
   }

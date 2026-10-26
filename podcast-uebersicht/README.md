@@ -1,4 +1,4 @@
-# Podcast-Übersicht
+# SpotiMy – Podcast-Übersicht
 
 Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein Klick auf eine Kachel öffnet die neuesten 20 Folgen mit Audio-Player. Es gibt keine Datenbank und kein Login.
 
