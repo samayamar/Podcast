@@ -37,3 +37,7 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
 ## Datenschutz
 
 Keine Benutzerkonten, kein Tracking, keine externen Schriftarten oder Skripte. Cover-Bilder und Audiodateien lädt der Browser direkt von den Servern der Podcast-Anbieter.
+
+## Online über GitHub Pages
+
+Der Workflow `.github/workflows/pages.yml` liest die Feeds auf GitHub ein (täglich, bei jedem Push auf `master` und manuell über den Actions-Tab) und veröffentlicht `index.html` mit `data/podcasts.json`. Einmalig nötig: **Settings → Pages → Source = „GitHub Actions“**. Die Seite ist dann öffentlich erreichbar unter `https://<benutzer>.github.io/<repository>/`.

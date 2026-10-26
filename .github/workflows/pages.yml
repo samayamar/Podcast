@@ -1,0 +1,66 @@
+# Liest die Feeds ein und veröffentlicht die Podcast-Übersicht auf GitHub Pages.
+# Voraussetzung: Settings → Pages → Source = "GitHub Actions".
+name: Podcast-Übersicht veröffentlichen
+
+on:
+  push:
+    branches: [master]
+  schedule:
+    - cron: "17 4 * * *"  # täglich um 04:17 UTC
+  workflow_dispatch:       # manuell über den Actions-Tab starten
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: podcast-uebersicht
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhängigkeiten installieren
+        run: pip install -r requirements.txt
+
+      - name: Pages konfigurieren
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Bisherige Daten holen (falls ein Feed ausfällt)
+        run: curl -fsSL "${{ steps.pages.outputs.base_url }}/data/podcasts.json" -o data/podcasts.json || rm -f data/podcasts.json
+
+      - name: Feeds einlesen
+        run: python update_feeds.py
+
+      - name: Seite zusammenstellen
+        run: |
+          mkdir -p ../_site/data
+          cp index.html ../_site/
+          cp data/podcasts.json ../_site/data/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Auf GitHub Pages veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v4
