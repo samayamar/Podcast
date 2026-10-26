@@ -267,13 +267,28 @@
   }
   /* Spotify-Folge: kompakter Spotify-Player unten fest, wie der eigene Player */
   .spotify-frame.album iframe { display: block; width: 100%; height: 100%; border: 0; }
+  .spotify-frame.album .embed { flex: 1; min-height: 0; }
+  .spotify-open {
+    flex: none;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    height: 54px;
+    background: var(--purple);
+    color: var(--white);
+    font-size: 1.05rem; font-weight: 700;
+    text-decoration: none;
+  }
+  .spotify-open:active { background: var(--purple-dark); }
+  .spotify-open:focus-visible { outline: 4px solid var(--yellow); outline-offset: -4px; }
   .spotify-frame.album {
+    display: flex; flex-direction: column;
+    background: var(--purple);
     overflow: hidden;
     position: fixed;
     left: 50%; bottom: 0; z-index: 10;
     transform: translateX(-50%);
     width: min(100%, 1100px);
-    height: 152px; min-height: 0; max-height: none;
+    height: calc(206px + env(safe-area-inset-bottom)); min-height: 0; max-height: none;
+    padding-bottom: env(safe-area-inset-bottom);
     margin: 0;
     border-radius: 20px 20px 0 0;
     box-shadow: 0 -6px 24px rgba(43, 33, 71, .25);
@@ -599,19 +614,48 @@
     return Boolean(safeUrl(ep.audio_url) || spotifyEmbedUrl(ep.embed_url));
   }
 
+  // Spotify-Link zum Öffnen in der App (dort laufen ganze Folgen, auch ohne Browser-Anmeldung)
+  function spotifyOpenUrl(embed) {
+    return embed.replace("/embed/", "/");
+  }
+
+  // Unten fester Kasten: Knopf "In Spotify öffnen" + Platz für den Spotify-Player
+  function spotifyAlbumBox(embed, title) {
+    const box = el("div", "spotify-frame album");
+    box.id = "spotify-frame";
+    box.title = "Spotify-Player: " + (title || "");
+    const open = el("a", "spotify-open", "▶ Ganze Folge in Spotify öffnen");
+    open.id = "spotify-open";
+    open.href = spotifyOpenUrl(embed);
+    open.target = "_blank";
+    open.rel = "noopener noreferrer";
+    const holder = el("div", "embed");
+    box.append(open, holder);
+    return { box: box, holder: holder };
+  }
+
+  function placeSpotifyBox(box) {
+    const old = $("spotify-frame");
+    if (old) old.replaceWith(box);
+    else detailEl.insertBefore(box, episodesEl);
+  }
+
   // Spotify-Player über der Folgenliste anzeigen (bzw. die Folge darin wechseln)
   function showSpotify(embed, title, album) {
     audio.pause(); // nicht zwei Player gleichzeitig
     // Immer ein neues iframe statt src zu ändern – das hält den Browserverlauf sauber
-    const old = $("spotify-frame");
-    const frame = el("iframe", "spotify-frame");
-    frame.id = "spotify-frame";
+    const frame = el("iframe", album ? null : "spotify-frame");
     frame.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
-    frame.classList.toggle("album", album);
     frame.title = "Spotify-Player: " + (title || "");
     frame.src = embed;
-    if (old) old.replaceWith(frame);
-    else detailEl.insertBefore(frame, episodesEl);
+    if (album) {
+      const parts = spotifyAlbumBox(embed, title);
+      parts.holder.append(frame);
+      placeSpotifyBox(parts.box);
+    } else {
+      frame.id = "spotify-frame";
+      placeSpotifyBox(frame);
+    }
     spotifyUsed = true;
     document.body.classList.add("spotify-mode");
     updatePlayerHeight();
@@ -658,25 +702,23 @@
     spotifyController.play();
   }
 
-  function showSpotifyControlled(uri, title) {
+  function showSpotifyControlled(uri, embed, title) {
     audio.pause();
     spotifyUsed = true;
     document.body.classList.add("spotify-mode");
 
-    if (spotifyController && $("spotify-frame")) {
+    if (spotifyController && $("spotify-frame") && $("spotify-open")) {
       $("spotify-frame").title = "Spotify-Player: " + (title || "");
+      $("spotify-open").href = spotifyOpenUrl(embed);
       playInController(uri);
       return;
     }
 
-    const old = $("spotify-frame");
-    const box = el("div", "spotify-frame album");
-    box.id = "spotify-frame";
-    box.title = "Spotify-Player: " + (title || "");
+    const parts = spotifyAlbumBox(embed, title);
+    const box = parts.box;
     const target = el("div");
-    box.append(target);
-    if (old) old.replaceWith(box);
-    else detailEl.insertBefore(box, episodesEl);
+    parts.holder.append(target);
+    placeSpotifyBox(box);
     updatePlayerHeight();
 
     spotifyWantsPlay = true;
@@ -709,7 +751,7 @@
     spotifyCurrent = { pi: pi, ei: ei };
     const uri = spotifyUri(embed);
     if (spotifyApi && uri) {
-      showSpotifyControlled(uri, ep.title);
+      showSpotifyControlled(uri, embed, ep.title);
     } else {
       showSpotify(embed, ep.title, true);
     }
