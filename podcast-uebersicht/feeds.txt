@@ -36,6 +36,6 @@ video: Die Sendung mit der Maus | KiKA
 video: Wissen macht Ah! | KiKA
 video: Checker Reportagen | KiKA | Checker Welt
 
-# ---------- Spiele von kika.de ----------
-# Format: spiele: Link zu einer Spiele-Seite oder einem einzelnen Spiel bei kika.de
-spiele: https://www.kika.de/check-die-ki/spiele/spiele-code-knacken-und-programmieren-lernen-100
+# ---------- Spiele ----------
+# Die eigenen Retro-Spiele stehen in spiele/spiele.json.
+# Zusätzlich gehen Spiele von kika.de: spiele: Link zu einer Spiele-Seite oder einem Spiel

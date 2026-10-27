@@ -688,6 +688,42 @@ def fetch_podcast(url: str) -> dict:
     }
 
 
+GAMES_FILE = BASE_DIR / "spiele" / "spiele.json"
+
+
+def local_games() -> dict | None:
+    """Die eigenen Retro-Spiele aus spiele/spiele.json als Spiele-Sammlung."""
+    try:
+        games = json.loads(GAMES_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    episodes = [{
+        "title": game["title"],
+        "published": None,
+        "duration": None,
+        "summary": game.get("summary", ""),
+        "link": None,
+        "audio_url": None,
+        "game_url": f"spiele/spiel.html?spiel={game['id']}",
+        "embeddable": True,
+        "fill": True,
+        "image": f"spiele/{game['id']}.svg",
+    } for game in games if game.get("id") and game.get("title")]
+    if not episodes:
+        return None
+    return {
+        "type": "games",
+        "title": "Retro-Spiele",
+        "description": "",
+        "link": None,
+        "image": episodes[0]["image"],
+        "feed_url": "lokal:spiele",
+        "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "episode_count": len(episodes),
+        "episodes": episodes,
+    }
+
+
 def write_json(data: dict, path: Path) -> None:
     """JSON zuerst in eine temporäre Datei schreiben, dann ersetzen."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -748,6 +784,11 @@ def main() -> int:
                        if (e.get("audio_url") or e.get("video_url") or "").startswith("http://"))
         if insecure:
             print(f"  Hinweis: {insecure} Folgen nur über http:// – Browser blockieren sie auf https-Seiten evtl.")
+
+    games = local_games()
+    if games:
+        podcasts.append(games)
+        print(f"Eigene Spiele: {games['episode_count']}")
 
     write_json(
         {

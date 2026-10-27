@@ -1,0 +1,7 @@
+[
+  { "id": "mampf", "title": "Mampf-Monster", "summary": "Punkte im Labyrinth futtern und den Gespenstern ausweichen" },
+  { "id": "weltraum", "title": "Weltraum-Wächter", "summary": "Die anrückenden Außerirdischen abwehren" },
+  { "id": "fass", "title": "Fass-Hüpfer", "summary": "Über Fässer springen und zu Piepsi hochklettern" },
+  { "id": "rohr", "title": "Rohr-Hüpfer", "summary": "Krabbelkäfer umkippen und wegschubsen" },
+  { "id": "flitzer", "title": "Flitzer-Rennen", "summary": "Mit dem Rennwagen den anderen Autos ausweichen" }
+]

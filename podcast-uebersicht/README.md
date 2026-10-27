@@ -15,7 +15,7 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
    Mit Spotify-Zugangsdaten (`SPOTIFY_CLIENT_ID` und `SPOTIFY_CLIENT_SECRET` als Umgebungsvariablen bzw. GitHub-Secrets, App auf developer.spotify.com, Besitzer braucht Premium) lädt das Skript bei Spotify-Künstlern die einzelnen Folgen (Alben). Sie erscheinen dann wie die anderen Folgen als Bildkacheln und öffnen sich im Spotify-Player.
    Apple-Music-Künstler (`https://music.apple.com/de/artist/…/ID`) werden über Apples öffentliche iTunes-Suche eingelesen, ohne Zugangsdaten. Die Alben erscheinen als Folgen-Kacheln und spielen im eingebetteten Apple-Music-Player: ganze Folgen mit Apple-Music-Abo (im Player anmelden), sonst Vorschau. Zweisprachige Ausgaben und Sammelboxen werden ausgelassen.
    **Videos** aus den Mediatheken (ARD, ZDF, KiKA – über das freie Verzeichnis MediathekViewWeb): `video: Sendung | Sender | Anzeigename`, z. B. `video: Die Sendung mit der Maus | KiKA`. Sender und Anzeigename sind optional. Fassungen mit Audiodeskription/Gebärdensprache werden ausgelassen, Vorschaubilder kommen von der Mediathek-Seite der Folge. Die Sender dürfen Videos nur befristet anbieten, manche nur in Deutschland.
-   **Spiele** von kika.de: `spiele: <Link zu einer Spiele-Seite oder einem Spiel>`. Spiele, die KiKA einbetten lässt, laufen in SpotiMy, die anderen öffnen sich bei kika.de.
+   **Spiele:** Im Ordner `spiele/` liegen fünf eigene Retro-Spiele (Mampf-Monster, Weltraum-Wächter, Fass-Hüpfer, Rohr-Hüpfer, Flitzer-Rennen) – selbst programmiert, mit eigenen Figuren, ohne fremde Inhalte. Sie stehen in `spiele/spiele.json`, laufen mit Touch-Knöpfen, Wischen oder Tastatur und merken sich den Rekord im Browser. Zusätzlich gehen Spiele von kika.de: `spiele: <Link zu einer Spiele-Seite oder einem Spiel>`.
    Die Startseite zeigt ein Hauptmenü mit **Podcasts, Videos und Spiele** (Bereiche ohne Inhalt werden ausgeblendet).
 2. **Feeds einlesen:**
    ```
@@ -41,6 +41,7 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
 | `index.html` | Startseite mit Kacheln und Detailansicht (CSS und JavaScript eingebettet) |
 | `data/podcasts.json` | wird vom Skript erzeugt (nicht im Git-Repository) |
 | `manifest.webmanifest`, `icon-*.png`, `icon.svg` | App-Symbol und Angaben für „Zum Home-Bildschirm“ |
+| `spiele/` | eigene Retro-Spiele: `spiel.html` + `retro.js`/`retro.css` (gemeinsame Grundlage) + je Spiel eine `.js`-Datei und ein Vorschaubild |
 
 ## Auf iPad und iPhone als App
 

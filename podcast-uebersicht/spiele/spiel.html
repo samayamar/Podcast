@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<title>Retro-Spiel</title>
+<link rel="stylesheet" href="retro.css">
+</head>
+<body>
+<div id="app">
+  <div id="hud"><span id="score">0</span><span id="title"></span><span id="lives"></span></div>
+  <div id="stage"><canvas id="screen"></canvas></div>
+  <div id="pad-left" class="pad"></div>
+  <div id="pad-right" class="pad"></div>
+  <div id="overlay">
+    <h1 id="overlay-title"></h1>
+    <p id="overlay-text"></p>
+    <button type="button" id="overlay-button">▶ Los geht's</button>
+    <p id="overlay-help"></p>
+  </div>
+</div>
+<script src="retro.js"></script>
+</body>
+</html>
