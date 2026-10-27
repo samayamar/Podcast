@@ -598,8 +598,11 @@
   function episodeName(p, ep) {
     let title = (ep && ep.title) || "Folge";
     const name = showName(p);
-    if (title.toLowerCase().indexOf(name.toLowerCase() + " ") === 0 && title.length > name.length + 3) {
-      title = title.slice(name.length).replace(/^[\s:|–-]+/, "");
+    // nur wenn danach etwas Neues beginnt ("CheckPod Milchstraße"), nicht "Mikado am Morgen"
+    const rest = title.slice(name.length);
+    if (title.toLowerCase().indexOf(name.toLowerCase()) === 0 && rest.length > 3 &&
+        /^(\s*[:|–-]\s*|\s+(?=[A-ZÄÖÜ0-9]))/.test(rest)) {
+      title = rest.replace(/^[\s:|–-]+/, "");
     }
     return title.replace(/\s+\|\s+/g, " – ");
   }
@@ -647,11 +650,31 @@
     });
   }
 
+  // Erscheinungsdatum als Zahl (ohne Datum: ganz nach hinten)
+  function episodeTime(ep) {
+    const t = Date.parse((ep && ep.published) || "");
+    return isNaN(t) ? 0 : t;
+  }
+
+  function showTime(p) {
+    return (p.episodes || []).reduce(function (max, ep) { return Math.max(max, episodeTime(ep)); }, 0);
+  }
+
+  // Indizes der Folgen, neueste zuerst (Indizes bleiben die aus den Daten)
+  function episodeOrder(p) {
+    return (p.episodes || []).map(function (ep, i) { return i; })
+      .sort(function (a, b) { return episodeTime(p.episodes[b]) - episodeTime(p.episodes[a]) || a - b; });
+  }
+
   function renderOverview(section) {
     gridEl.replaceChildren();
     if (section === "spiele") { renderGames(); return; }
-    podcasts.forEach(function (p, index) {
-      if (sectionOf(p) !== section) return;
+    // Sendungen mit der neuesten Folge zuerst
+    podcasts.map(function (p, index) { return index; })
+      .filter(function (index) { return sectionOf(podcasts[index]) === section; })
+      .sort(function (a, b) { return showTime(podcasts[b]) - showTime(podcasts[a]) || a - b; })
+      .forEach(function (index) {
+      const p = podcasts[index];
       const tile = el("button", "tile");
       tile.type = "button";
       tile.style.setProperty("--tile", "var(" + TILE_COLORS[index % TILE_COLORS.length] + ")");
@@ -827,11 +850,10 @@
     const words = query.split(/\s+/);
     const hits = searchIndex
       .filter(function (e) { return words.every(function (w) { return e.text.includes(w); }); })
-      // Treffer im Titel zuerst
+      // Neueste zuerst
       .sort(function (a, b) {
-        const at = words.every(function (w) { return a.title.includes(w); });
-        const bt = words.every(function (w) { return b.title.includes(w); });
-        return (bt - at) || a.pi - b.pi || a.ei - b.ei;
+        return episodeTime(podcasts[b.pi].episodes[b.ei]) - episodeTime(podcasts[a.pi].episodes[a.ei]) ||
+          a.pi - b.pi || a.ei - b.ei;
       });
 
     gridEl.hidden = true;
@@ -866,8 +888,8 @@
     episodesEl.replaceChildren();
     removeSpotify();
 
-    (p.episodes || []).slice(0, 20).forEach(function (ep, i) {
-      if (isPlayable(ep)) episodesEl.append(episodeCard(index, i, false));
+    episodeOrder(p).slice(0, 20).forEach(function (i) {
+      if (isPlayable(p.episodes[i])) episodesEl.append(episodeCard(index, i, false));
     });
 
     // Spotify ohne einzelne Folgen: Spotify-Player des Künstlers zeigen.
