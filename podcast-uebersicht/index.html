@@ -111,7 +111,15 @@
   }
 
   /* Detailansicht */
-  .detail-head { display: flex; align-items: center; gap: 14px; margin: 16px 0 8px; }
+  /* Kopfzeile mit Zurück-Pfeil und Titel bleibt beim Scrollen oben stehen */
+  .detail-head {
+    display: flex; align-items: center; gap: 14px;
+    position: sticky; top: 0; z-index: 5;
+    margin: 8px -16px 8px;
+    padding: max(10px, env(safe-area-inset-top)) 16px 10px;
+    background: var(--bg);
+    box-shadow: 0 8px 12px -10px rgba(43, 33, 71, .35);
+  }
   .back {
     flex: none;
     width: 56px; height: 56px;
@@ -343,7 +351,7 @@
   @media (hover: hover) {
     .menu-tile:hover { transform: translateY(-3px) rotate(-.5deg); }
   }
-  .section-head { margin-top: 18px; }
+  .section-head { margin-top: 10px; }
   @media (min-width: 601px) {
     .menu-tile { min-height: min(46vh, 380px); font-size: 2.2rem; }
     .menu-tile .icon { font-size: 6rem; }
