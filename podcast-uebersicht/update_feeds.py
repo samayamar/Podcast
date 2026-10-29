@@ -27,6 +27,13 @@ OUTPUT_FILE = BASE_DIR / "data" / "podcasts.json"
 USER_AGENT = "PodcastUebersicht/1.0"
 TIMEOUT = 15  # Sekunden
 MAX_EPISODES = 20
+ALL_EPISODES = 100_000  # "| alle" hinter einer Feed-Zeile: alle Folgen behalten
+_limit = MAX_EPISODES
+
+
+def episode_limit() -> int:
+    """Wie viele Folgen für den gerade geladenen Feed gespeichert werden."""
+    return _limit
 SUMMARY_LENGTH = 300
 
 BLOCK_TAG_RE = re.compile(r"</?(p|br|div|li|ul|ol|h[1-6]|tr|td|blockquote)\b[^>]*>", re.IGNORECASE)
@@ -187,7 +194,7 @@ def fetch_ard_show(url: str, show_id: str) -> dict:
     """Sendung aus ARD Sounds / ARD Audiothek über deren öffentliche Schnittstelle laden."""
     response = requests.post(
         ARD_API,
-        json={"query": ARD_QUERY, "variables": {"id": show_id, "first": MAX_EPISODES * 2}},
+        json={"query": ARD_QUERY, "variables": {"id": show_id, "first": min(episode_limit() * 2, 1000)}},
         headers={"User-Agent": USER_AGENT},
         timeout=TIMEOUT,
     )
@@ -226,7 +233,7 @@ def fetch_ard_show(url: str, show_id: str) -> dict:
         "feed_url": url,
         "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "episode_count": show.get("numberOfElements") or len(episodes),
-        "episodes": episodes[:MAX_EPISODES],
+        "episodes": episodes[:episode_limit()],
     }
 
 
@@ -351,7 +358,7 @@ def fetch_spotify(url: str, kind: str, spotify_id: str) -> dict:
             "feed_url": url,
             "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "episode_count": len(episodes),
-            "episodes": episodes[:MAX_EPISODES],
+            "episodes": episodes[:episode_limit()],
         }
 
     response = requests.get(
@@ -432,7 +439,7 @@ def fetch_apple_artist(url: str, country: str, artist_id: str) -> dict:
         "feed_url": url,
         "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "episode_count": len(episodes),
-        "episodes": episodes[:MAX_EPISODES],
+        "episodes": episodes[:episode_limit()],
     }
 
 
@@ -521,7 +528,7 @@ def fetch_mediathek_videos(line: str, spec: str) -> dict:
             "video_url": prefer_https(item["url_video"]),
             "image": None,
         })
-        if len(episodes) >= MAX_EPISODES:
+        if len(episodes) >= episode_limit():
             break
     if not episodes:
         raise ValueError(f"Keine Videos zu „{topic}“ gefunden")
@@ -629,7 +636,25 @@ def fetch_kika_games(line: str, url: str) -> dict:
     }
 
 
-def fetch_podcast(url: str) -> dict:
+ALL_RE = re.compile(r"\s*\|\s*alle\s*$", re.IGNORECASE)
+
+
+def fetch_podcast(line: str) -> dict:
+    """Eine Zeile aus feeds.txt laden. "… | alle" am Ende speichert alle Folgen statt der neuesten 20."""
+    global _limit
+    url = line
+    if not line.lower().startswith(("video:", "spiele:")) and ALL_RE.search(line):
+        url = ALL_RE.sub("", line)
+        _limit = ALL_EPISODES
+    try:
+        podcast = fetch_source(url)
+    finally:
+        _limit = MAX_EPISODES
+    podcast["feed_url"] = line  # damit bei Fehlern die bisherigen Daten gefunden werden
+    return podcast
+
+
+def fetch_source(url: str) -> dict:
     """Einen Feed abrufen und auswerten. Wirft bei Fehlern eine Exception.
 
     Ist die Adresse eine Webseite statt eines Feeds, wird der dort verlinkte Feed verwendet.
@@ -684,7 +709,7 @@ def fetch_podcast(url: str) -> dict:
         "feed_url": url,
         "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "episode_count": len(episodes),
-        "episodes": episodes[:MAX_EPISODES],
+        "episodes": episodes[:episode_limit()],
     }
 
 

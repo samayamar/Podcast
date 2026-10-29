@@ -28,5 +28,10 @@
     "id": "dino",
     "title": "Dino-Sprint",
     "summary": "Mit dem kleinen Dino über Kakteen springen"
+  },
+  {
+    "id": "kloetzchen",
+    "title": "Klötzchen-Stapler",
+    "summary": "Fallende Steine drehen und volle Reihen abräumen"
   }
 ]

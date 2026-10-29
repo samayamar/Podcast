@@ -890,7 +890,7 @@
     episodesEl.replaceChildren();
     removeSpotify();
 
-    episodeOrder(p).slice(0, 20).forEach(function (i) {
+    episodeOrder(p).forEach(function (i) {
       if (isPlayable(p.episodes[i])) episodesEl.append(episodeCard(index, i, false));
     });
 

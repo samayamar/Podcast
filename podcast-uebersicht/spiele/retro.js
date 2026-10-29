@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const GAMES = ["mampf", "weltraum", "fass", "rohr", "flitzer", "dino"];
+  const GAMES = ["mampf", "weltraum", "fass", "rohr", "flitzer", "dino", "kloetzchen"];
   const RES = 3; // interne Auflösung je Spielpixel (scharf auf Retina-Displays)
 
   const $ = function (id) { return document.getElementById(id); };

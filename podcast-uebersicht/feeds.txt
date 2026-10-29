@@ -1,5 +1,5 @@
-# CheckPod – Der Podcast mit Checker Tobi (BR)
-https://feeds.br.de/checkpod-der-podcast-mit-checker-tobi/feed.xml
+# CheckPod – Der Podcast mit Checker Tobi (BR) – alle Folgen
+https://feeds.br.de/checkpod-der-podcast-mit-checker-tobi/feed.xml | alle
 
 # Lachlabor (BR)
 https://feeds.br.de/lachlabor/feed.xml
@@ -28,7 +28,7 @@ https://www.kakadu.de/kakadu-104.xml
 # Mikado am Morgen (NDR Info)
 https://www.ndr.de/nachrichten/info/sendungen/mikado/mikado_am_morgen/podcast4223.xml
 
-# Weitere Feeds hier eintragen
+# Weitere Feeds hier eintragen ("| alle" am Zeilenende lädt alle Folgen statt der neuesten 20)
 
 # ---------- Videos (aus den Mediatheken von ARD/ZDF/KiKA, über MediathekViewWeb) ----------
 # Format: video: Sendung | Sender | Anzeigename (Sender und Anzeigename sind optional)
