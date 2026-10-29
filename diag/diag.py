@@ -1,8 +1,8 @@
 import requests
 d = requests.get("https://samayamar.github.io/Podcast/data/podcasts.json", timeout=20).json()
 for p in d["podcasts"]:
-    if p.get("type") not in ("video", "games"): continue
     eps = p["episodes"]
-    print(p["type"], "|", p["title"], "| Bild Sendung:", bool(p.get("image")), "| Folgen mit Bild:", sum(1 for e in eps if e.get("image")), "/", len(eps))
-    for e in eps[:2]:
-        print("   -", e["title"], "|", (e.get("video_url") or e.get("game_url"))[:70], "| einbettbar:", e.get("embeddable"), "|", e.get("duration"))
+    print(f"{p.get('type','podcast'):8} | {p['title'][:40]:40} | gespeichert {len(eps):4} | im Feed {p.get('episode_count')}")
+cp = next(p for p in d["podcasts"] if p["title"].startswith("CheckPod"))
+print("älteste CheckPod-Folge:", cp["episodes"][-1]["published"], cp["episodes"][-1]["title"])
+r = requests.get("https://samayamar.github.io/Podcast/spiele/spiel.html?spiel=kloetzchen", timeout=20); print("Spiel-Seite:", r.status_code)
