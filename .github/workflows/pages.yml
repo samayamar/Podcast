@@ -54,6 +54,7 @@ jobs:
           cp index.html manifest.webmanifest icon-180.png icon-192.png icon-512.png ../_site/
           cp data/podcasts.json ../_site/data/
           cp -r spiele ../_site/
+          cp -r lernen ../_site/
 
       - uses: actions/upload-pages-artifact@v3
         with:

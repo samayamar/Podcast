@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<title>Lernen – SpotiMy</title>
+<link rel="stylesheet" href="lernen.css">
+</head>
+<body>
+<div id="app">
+  <header id="bar">
+    <span id="stars" aria-label="Sterne">⭐ 0</span>
+    <h1 id="title"></h1>
+    <button type="button" id="speak" aria-label="Vorlesen">🔊</button>
+  </header>
+  <div id="progress" aria-hidden="true"></div>
+  <main id="main"></main>
+</div>
+<div id="overlay" hidden>
+  <div class="panel">
+    <div id="overlay-icon"></div>
+    <h2 id="overlay-title"></h2>
+    <p id="overlay-text"></p>
+    <div id="overlay-buttons"></div>
+  </div>
+</div>
+<script src="lernen.js"></script>
+</body>
+</html>

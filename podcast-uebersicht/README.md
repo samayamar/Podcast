@@ -17,7 +17,8 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
    Apple-Music-Künstler (`https://music.apple.com/de/artist/…/ID`) werden über Apples öffentliche iTunes-Suche eingelesen, ohne Zugangsdaten. Die Alben erscheinen als Folgen-Kacheln und spielen im eingebetteten Apple-Music-Player: ganze Folgen mit Apple-Music-Abo (im Player anmelden), sonst Vorschau. Zweisprachige Ausgaben und Sammelboxen werden ausgelassen.
    **Videos** aus den Mediatheken (ARD, ZDF, KiKA – über das freie Verzeichnis MediathekViewWeb): `video: Sendung | Sender | Anzeigename`, z. B. `video: Die Sendung mit der Maus | KiKA`. Sender und Anzeigename sind optional. Fassungen mit Audiodeskription/Gebärdensprache werden ausgelassen, Vorschaubilder kommen von der Mediathek-Seite der Folge. Die Sender dürfen Videos nur befristet anbieten, manche nur in Deutschland.
    **Spiele:** Im Ordner `spiele/` liegen sieben eigene Retro-Spiele (Mampf-Monster, Weltraum-Wächter, Fass-Hüpfer, Rohr-Hüpfer, Flitzer-Rennen, Dino-Sprint, Klötzchen-Stapler) – selbst programmiert, mit eigenen Figuren, ohne fremde Inhalte. Sie stehen in `spiele/spiele.json`, laufen mit Touch-Knöpfen, Wischen oder Tastatur und merken sich den Rekord im Browser. Zusätzlich gehen Spiele von kika.de: `spiele: <Link zu einer Spiele-Seite oder einem Spiel>`.
-   Die Startseite zeigt ein Hauptmenü mit **Podcasts, Videos und Spiele** (Bereiche ohne Inhalt werden ausgeblendet).
+   **Lernen:** Im Ordner `lernen/` liegen Lernspiele für die 1. Klasse (Zahlen-Zoo, Rechen-Rakete, Anlaut-Angeln, Silben-Trommel, Uhr-Detektiv, Muster-Raupe, Taschengeld-Laden, Bilder-Memory – Aufgaben werden mit der deutschen Stimme des Geräts vorgelesen, die Schwierigkeit passt sich an) und Wissenskarten für die 4. Klasse (Mathe, Deutsch, Natur & Technik, Gesellschaft & Politik, Englisch) mit Lernkasten (5 Fächer) und Quiz. Die Karten stehen in `lernen/karten/*.json` (`f` = Frage, `a` = Antwort, `g` = Themenbereich für die Quiz-Auswahl) und lassen sich dort ergänzen; die Liste der Kacheln steht in `lernen/lernen.json`.
+   Die Startseite zeigt ein Hauptmenü mit **Podcasts, Videos, Spiele und Lernen** (Bereiche ohne Inhalt werden ausgeblendet).
 2. **Feeds einlesen:**
    ```
    python update_feeds.py
@@ -42,6 +43,7 @@ Eine kleine lokale Webseite, die Podcasts aus RSS-Feeds als Kacheln anzeigt. Ein
 | `index.html` | Startseite mit Kacheln und Detailansicht (CSS und JavaScript eingebettet) |
 | `data/podcasts.json` | wird vom Skript erzeugt (nicht im Git-Repository) |
 | `manifest.webmanifest`, `icon-*.png`, `icon.svg` | App-Symbol und Angaben für „Zum Home-Bildschirm“ |
+| `lernen/` | Lernspiele (1. Klasse) und Wissenskarten (4. Klasse): `lernen.html` + `lernen.js`/`lernen.css`, `spiele1.js`, `karten.js`, `karten/*.json` |
 | `spiele/` | eigene Retro-Spiele: `spiel.html` + `retro.js`/`retro.css` (gemeinsame Grundlage) + je Spiel eine `.js`-Datei und ein Vorschaubild |
 
 ## Auf iPad und iPhone als App

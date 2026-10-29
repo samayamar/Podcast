@@ -1,0 +1,182 @@
+{
+ "titel": "Englisch",
+ "icon": "🇬🇧",
+ "karten": [
+  {
+   "f": "Was heißt „rot“ auf Englisch?",
+   "a": "red",
+   "g": "farben"
+  },
+  {
+   "f": "Was heißt „blau“ auf Englisch?",
+   "a": "blue",
+   "g": "farben"
+  },
+  {
+   "f": "Was heißt „grün“ auf Englisch?",
+   "a": "green",
+   "g": "farben"
+  },
+  {
+   "f": "Was heißt „gelb“ auf Englisch?",
+   "a": "yellow",
+   "g": "farben"
+  },
+  {
+   "f": "Was heißt „schwarz“ auf Englisch?",
+   "a": "black",
+   "g": "farben"
+  },
+  {
+   "f": "Was heißt „weiß“ auf Englisch?",
+   "a": "white",
+   "g": "farben"
+  },
+  {
+   "f": "Was heißt „Hund“ auf Englisch?",
+   "a": "dog",
+   "g": "tiere"
+  },
+  {
+   "f": "Was heißt „Katze“ auf Englisch?",
+   "a": "cat",
+   "g": "tiere"
+  },
+  {
+   "f": "Was heißt „Pferd“ auf Englisch?",
+   "a": "horse",
+   "g": "tiere"
+  },
+  {
+   "f": "Was heißt „Vogel“ auf Englisch?",
+   "a": "bird",
+   "g": "tiere"
+  },
+  {
+   "f": "Was heißt „Maus“ auf Englisch?",
+   "a": "mouse",
+   "g": "tiere"
+  },
+  {
+   "f": "Was heißt „Kaninchen“ auf Englisch?",
+   "a": "rabbit",
+   "g": "tiere"
+  },
+  {
+   "f": "Was heißt „Mutter“ auf Englisch?",
+   "a": "mother",
+   "g": "familie"
+  },
+  {
+   "f": "Was heißt „Vater“ auf Englisch?",
+   "a": "father",
+   "g": "familie"
+  },
+  {
+   "f": "Was heißt „Schwester“ auf Englisch?",
+   "a": "sister",
+   "g": "familie"
+  },
+  {
+   "f": "Was heißt „Bruder“ auf Englisch?",
+   "a": "brother",
+   "g": "familie"
+  },
+  {
+   "f": "Was heißt „Großmutter“ auf Englisch?",
+   "a": "grandmother",
+   "g": "familie"
+  },
+  {
+   "f": "Was heißt „Montag“ auf Englisch?",
+   "a": "Monday",
+   "g": "tage"
+  },
+  {
+   "f": "Was heißt „Dienstag“ auf Englisch?",
+   "a": "Tuesday",
+   "g": "tage"
+  },
+  {
+   "f": "Was heißt „Mittwoch“ auf Englisch?",
+   "a": "Wednesday",
+   "g": "tage"
+  },
+  {
+   "f": "Was heißt „Donnerstag“ auf Englisch?",
+   "a": "Thursday",
+   "g": "tage"
+  },
+  {
+   "f": "Was heißt „Freitag“ auf Englisch?",
+   "a": "Friday",
+   "g": "tage"
+  },
+  {
+   "f": "Was heißt „Samstag“ auf Englisch?",
+   "a": "Saturday",
+   "g": "tage"
+  },
+  {
+   "f": "Was heißt „Sonntag“ auf Englisch?",
+   "a": "Sunday",
+   "g": "tage"
+  },
+  {
+   "f": "Was heißt „Bleistift“ auf Englisch?",
+   "a": "pencil",
+   "g": "schule"
+  },
+  {
+   "f": "Was heißt „Kugelschreiber“ auf Englisch?",
+   "a": "pen",
+   "g": "schule"
+  },
+  {
+   "f": "Was heißt „Buch“ auf Englisch?",
+   "a": "book",
+   "g": "schule"
+  },
+  {
+   "f": "Was heißt „Lineal“ auf Englisch?",
+   "a": "ruler",
+   "g": "schule"
+  },
+  {
+   "f": "Was heißt „Radiergummi“ auf Englisch?",
+   "a": "rubber (eraser)",
+   "g": "schule"
+  },
+  {
+   "f": "Was heißt „Schultasche“ auf Englisch?",
+   "a": "schoolbag",
+   "g": "schule"
+  },
+  {
+   "f": "Was heißt „zwölf“ auf Englisch?",
+   "a": "twelve",
+   "g": "zahlen"
+  },
+  {
+   "f": "Was heißt „dreizehn“ auf Englisch?",
+   "a": "thirteen",
+   "g": "zahlen"
+  },
+  {
+   "f": "Was heißt „fünfzehn“ auf Englisch?",
+   "a": "fifteen",
+   "g": "zahlen"
+  },
+  {
+   "f": "Was heißt „zwanzig“ auf Englisch?",
+   "a": "twenty",
+   "g": "zahlen"
+  },
+  {
+   "f": "Was heißt „hundert“ auf Englisch?",
+   "a": "one hundred",
+   "g": "zahlen"
+  }
+ ],
+ "antwortSprache": "en-GB"
+}

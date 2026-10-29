@@ -1,0 +1,79 @@
+{
+ "gruppen": [
+  {
+   "titel": "Lernspiele · 1. Klasse",
+   "eintraege": [
+    {
+     "titel": "Zahlen-Zoo",
+     "url": "lernen/lernen.html?spiel=zahlen",
+     "bild": "lernen/bilder/zahlen.svg"
+    },
+    {
+     "titel": "Rechen-Rakete",
+     "url": "lernen/lernen.html?spiel=rechnen",
+     "bild": "lernen/bilder/rechnen.svg"
+    },
+    {
+     "titel": "Anlaut-Angeln",
+     "url": "lernen/lernen.html?spiel=anlaut",
+     "bild": "lernen/bilder/anlaut.svg"
+    },
+    {
+     "titel": "Silben-Trommel",
+     "url": "lernen/lernen.html?spiel=silben",
+     "bild": "lernen/bilder/silben.svg"
+    },
+    {
+     "titel": "Uhr-Detektiv",
+     "url": "lernen/lernen.html?spiel=uhr",
+     "bild": "lernen/bilder/uhr.svg"
+    },
+    {
+     "titel": "Muster-Raupe",
+     "url": "lernen/lernen.html?spiel=muster",
+     "bild": "lernen/bilder/muster.svg"
+    },
+    {
+     "titel": "Taschengeld-Laden",
+     "url": "lernen/lernen.html?spiel=geld",
+     "bild": "lernen/bilder/geld.svg"
+    },
+    {
+     "titel": "Bilder-Memory",
+     "url": "lernen/lernen.html?spiel=memory",
+     "bild": "lernen/bilder/memory.svg"
+    }
+   ]
+  },
+  {
+   "titel": "Wissenskarten · 4. Klasse",
+   "eintraege": [
+    {
+     "titel": "Mathe",
+     "url": "lernen/lernen.html?karten=mathe",
+     "bild": "lernen/bilder/karten-mathe.svg"
+    },
+    {
+     "titel": "Deutsch",
+     "url": "lernen/lernen.html?karten=deutsch",
+     "bild": "lernen/bilder/karten-deutsch.svg"
+    },
+    {
+     "titel": "Natur & Technik",
+     "url": "lernen/lernen.html?karten=natur",
+     "bild": "lernen/bilder/karten-natur.svg"
+    },
+    {
+     "titel": "Gesellschaft & Politik",
+     "url": "lernen/lernen.html?karten=gesellschaft",
+     "bild": "lernen/bilder/karten-gesellschaft.svg"
+    },
+    {
+     "titel": "Englisch",
+     "url": "lernen/lernen.html?karten=englisch",
+     "bild": "lernen/bilder/karten-englisch.svg"
+    }
+   ]
+  }
+ ]
+}

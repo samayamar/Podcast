@@ -1,0 +1,256 @@
+{
+ "titel": "Mathe",
+ "icon": "🔢",
+ "karten": [
+  {
+   "f": "7 · 8 = ?",
+   "a": "56",
+   "g": "mal"
+  },
+  {
+   "f": "6 · 9 = ?",
+   "a": "54",
+   "g": "mal"
+  },
+  {
+   "f": "8 · 8 = ?",
+   "a": "64",
+   "g": "mal"
+  },
+  {
+   "f": "9 · 7 = ?",
+   "a": "63",
+   "g": "mal"
+  },
+  {
+   "f": "6 · 7 = ?",
+   "a": "42",
+   "g": "mal"
+  },
+  {
+   "f": "4 · 9 = ?",
+   "a": "36",
+   "g": "mal"
+  },
+  {
+   "f": "12 · 5 = ?",
+   "a": "60",
+   "g": "mal"
+  },
+  {
+   "f": "9 · 9 = ?",
+   "a": "81",
+   "g": "mal"
+  },
+  {
+   "f": "72 : 8 = ?",
+   "a": "9",
+   "g": "geteilt"
+  },
+  {
+   "f": "56 : 7 = ?",
+   "a": "8",
+   "g": "geteilt"
+  },
+  {
+   "f": "42 : 6 = ?",
+   "a": "7",
+   "g": "geteilt"
+  },
+  {
+   "f": "30 : 5 = ?",
+   "a": "6",
+   "g": "geteilt"
+  },
+  {
+   "f": "100 : 4 = ?",
+   "a": "25",
+   "g": "geteilt"
+  },
+  {
+   "f": "90 : 3 = ?",
+   "a": "30",
+   "g": "geteilt"
+  },
+  {
+   "f": "1 km = ? m",
+   "a": "1 000 m",
+   "g": "laenge"
+  },
+  {
+   "f": "1 m = ? cm",
+   "a": "100 cm",
+   "g": "laenge"
+  },
+  {
+   "f": "1 cm = ? mm",
+   "a": "10 mm",
+   "g": "laenge"
+  },
+  {
+   "f": "1 m = ? mm",
+   "a": "1 000 mm",
+   "g": "laenge"
+  },
+  {
+   "f": "2 km = ? m",
+   "a": "2 000 m",
+   "g": "laenge"
+  },
+  {
+   "f": "3 m = ? cm",
+   "a": "300 cm",
+   "g": "laenge"
+  },
+  {
+   "f": "1 kg = ? g",
+   "a": "1 000 g",
+   "g": "gewicht"
+  },
+  {
+   "f": "1 t = ? kg",
+   "a": "1 000 kg",
+   "g": "gewicht"
+  },
+  {
+   "f": "ein halbes kg = ? g",
+   "a": "500 g",
+   "g": "gewicht"
+  },
+  {
+   "f": "2 kg = ? g",
+   "a": "2 000 g",
+   "g": "gewicht"
+  },
+  {
+   "f": "1 h = ? min",
+   "a": "60 min",
+   "g": "zeit"
+  },
+  {
+   "f": "1 min = ? s",
+   "a": "60 s",
+   "g": "zeit"
+  },
+  {
+   "f": "1 Tag = ? h",
+   "a": "24 h",
+   "g": "zeit"
+  },
+  {
+   "f": "1 Woche = ? Tage",
+   "a": "7 Tage",
+   "g": "zeit"
+  },
+  {
+   "f": "1 Jahr = ? Monate",
+   "a": "12 Monate",
+   "g": "zeit"
+  },
+  {
+   "f": "eine halbe Stunde = ? min",
+   "a": "30 min",
+   "g": "zeit"
+  },
+  {
+   "f": "Wie viele Ecken hat ein Würfel?",
+   "a": "8",
+   "g": "koerper"
+  },
+  {
+   "f": "Wie viele Kanten hat ein Würfel?",
+   "a": "12",
+   "g": "koerper"
+  },
+  {
+   "f": "Wie viele Flächen hat ein Würfel?",
+   "a": "6",
+   "g": "koerper"
+  },
+  {
+   "f": "Wie viele Ecken hat eine Kugel?",
+   "a": "0",
+   "g": "koerper"
+  },
+  {
+   "f": "Wie viele Ecken hat eine Pyramide mit quadratischer Grundfläche?",
+   "a": "5",
+   "g": "koerper"
+  },
+  {
+   "f": "Umfang eines Rechtecks: 5 cm lang, 3 cm breit",
+   "a": "16 cm",
+   "g": "flaeche"
+  },
+  {
+   "f": "Flächeninhalt eines Rechtecks: 5 cm lang, 3 cm breit",
+   "a": "15 cm²",
+   "g": "flaeche"
+  },
+  {
+   "f": "Umfang eines Quadrats mit 6 cm Seitenlänge",
+   "a": "24 cm",
+   "g": "flaeche"
+  },
+  {
+   "f": "Flächeninhalt eines Quadrats mit 6 cm Seitenlänge",
+   "a": "36 cm²",
+   "g": "flaeche"
+  },
+  {
+   "f": "Umfang eines Quadrats mit 3 cm Seitenlänge",
+   "a": "12 cm",
+   "g": "flaeche"
+  },
+  {
+   "f": "Wie viele Nullen hat eine Million?",
+   "a": "6",
+   "g": "zahlen"
+  },
+  {
+   "f": "Runde 4 638 auf Hunderter.",
+   "a": "4 600",
+   "g": "zahlen"
+  },
+  {
+   "f": "Runde 7 250 auf Tausender.",
+   "a": "7 000",
+   "g": "zahlen"
+  },
+  {
+   "f": "Was ist der Nachfolger von 9 999?",
+   "a": "10 000",
+   "g": "zahlen"
+  },
+  {
+   "f": "Was ist der Vorgänger von 100 000?",
+   "a": "99 999",
+   "g": "zahlen"
+  },
+  {
+   "f": "Schreibe als Zahl: zweihunderttausendfünfzig",
+   "a": "200 050",
+   "g": "zahlen"
+  },
+  {
+   "f": "Wie heißt das Ergebnis einer Plusaufgabe?",
+   "a": "Summe",
+   "g": "begriffe"
+  },
+  {
+   "f": "Wie heißt das Ergebnis einer Minusaufgabe?",
+   "a": "Differenz",
+   "g": "begriffe"
+  },
+  {
+   "f": "Wie heißt das Ergebnis einer Malaufgabe?",
+   "a": "Produkt",
+   "g": "begriffe"
+  },
+  {
+   "f": "Wie heißt das Ergebnis einer Geteiltaufgabe?",
+   "a": "Quotient",
+   "g": "begriffe"
+  }
+ ]
+}

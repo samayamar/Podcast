@@ -749,6 +749,45 @@ def local_games() -> dict | None:
     }
 
 
+LEARN_FILE = BASE_DIR / "lernen" / "lernen.json"
+
+
+def local_learning() -> list[dict]:
+    """Lernspiele und Wissenskarten aus lernen/lernen.json – je Gruppe eine Sammlung im Bereich "Lernen"."""
+    try:
+        groups = json.loads(LEARN_FILE.read_text(encoding="utf-8")).get("gruppen", [])
+    except (OSError, ValueError):
+        return []
+    collections = []
+    for i, group in enumerate(groups):
+        episodes = [{
+            "title": item["titel"],
+            "published": None,
+            "duration": None,
+            "summary": item.get("text", ""),
+            "link": None,
+            "audio_url": None,
+            "game_url": item["url"],
+            "embeddable": True,
+            "fill": True,
+            "image": item.get("bild"),
+        } for item in group.get("eintraege", []) if item.get("titel") and item.get("url")]
+        if episodes:
+            collections.append({
+                "type": "games",
+                "section": "lernen",
+                "title": group.get("titel", "Lernen"),
+                "description": "",
+                "link": None,
+                "image": episodes[0]["image"],
+                "feed_url": f"lokal:lernen-{i}",
+                "last_updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "episode_count": len(episodes),
+                "episodes": episodes,
+            })
+    return collections
+
+
 def write_json(data: dict, path: Path) -> None:
     """JSON zuerst in eine temporäre Datei schreiben, dann ersetzen."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -814,6 +853,9 @@ def main() -> int:
     if games:
         podcasts.append(games)
         print(f"Eigene Spiele: {games['episode_count']}")
+    for collection in local_learning():
+        podcasts.append(collection)
+        print(f"Lernen – {collection['title']}: {collection['episode_count']}")
 
     write_json(
         {

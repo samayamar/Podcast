@@ -1,0 +1,181 @@
+{
+ "titel": "Deutsch",
+ "icon": "📖",
+ "karten": [
+  {
+   "f": "Welche Wortart ist „Hund“?",
+   "a": "Nomen",
+   "g": "wortart"
+  },
+  {
+   "f": "Welche Wortart ist „springen“?",
+   "a": "Verb",
+   "g": "wortart"
+  },
+  {
+   "f": "Welche Wortart ist „schnell“?",
+   "a": "Adjektiv",
+   "g": "wortart"
+  },
+  {
+   "f": "Welche Wortart ist „unter“?",
+   "a": "Präposition",
+   "g": "wortart"
+  },
+  {
+   "f": "Welche Wortart ist „die“ in „die Katze“?",
+   "a": "Artikel",
+   "g": "wortart"
+  },
+  {
+   "f": "Welche Wortart ist „wir“?",
+   "a": "Pronomen",
+   "g": "wortart"
+  },
+  {
+   "f": "In welcher Zeitform steht „ich lief“?",
+   "a": "Präteritum (1. Vergangenheit)",
+   "g": "zeit"
+  },
+  {
+   "f": "In welcher Zeitform steht „ich bin gelaufen“?",
+   "a": "Perfekt (2. Vergangenheit)",
+   "g": "zeit"
+  },
+  {
+   "f": "In welcher Zeitform steht „ich laufe“?",
+   "a": "Präsens (Gegenwart)",
+   "g": "zeit"
+  },
+  {
+   "f": "In welcher Zeitform steht „ich werde laufen“?",
+   "a": "Futur (Zukunft)",
+   "g": "zeit"
+  },
+  {
+   "f": "In welcher Zeitform steht „sie hat gelacht“?",
+   "a": "Perfekt (2. Vergangenheit)",
+   "g": "zeit"
+  },
+  {
+   "f": "In welcher Zeitform steht „wir spielten“?",
+   "a": "Präteritum (1. Vergangenheit)",
+   "g": "zeit"
+  },
+  {
+   "f": "Mit welcher Frage findest du das Subjekt?",
+   "a": "Wer oder was?",
+   "g": "satzglied"
+  },
+  {
+   "f": "Mit welcher Frage findest du das Akkusativobjekt?",
+   "a": "Wen oder was?",
+   "g": "satzglied"
+  },
+  {
+   "f": "Mit welcher Frage findest du das Dativobjekt?",
+   "a": "Wem?",
+   "g": "satzglied"
+  },
+  {
+   "f": "Mit welcher Frage findest du eine Ortsangabe?",
+   "a": "Wo?",
+   "g": "satzglied"
+  },
+  {
+   "f": "Mit welcher Frage findest du eine Zeitangabe?",
+   "a": "Wann?",
+   "g": "satzglied"
+  },
+  {
+   "f": "Mit welcher Frage findest du das Prädikat?",
+   "a": "Was tut jemand?",
+   "g": "satzglied"
+  },
+  {
+   "f": "Mehrzahl von „der Baum“",
+   "a": "die Bäume",
+   "g": "mehrzahl"
+  },
+  {
+   "f": "Mehrzahl von „das Haus“",
+   "a": "die Häuser",
+   "g": "mehrzahl"
+  },
+  {
+   "f": "Mehrzahl von „das Kind“",
+   "a": "die Kinder",
+   "g": "mehrzahl"
+  },
+  {
+   "f": "Mehrzahl von „die Maus“",
+   "a": "die Mäuse",
+   "g": "mehrzahl"
+  },
+  {
+   "f": "Mehrzahl von „das Buch“",
+   "a": "die Bücher",
+   "g": "mehrzahl"
+  },
+  {
+   "f": "Mehrzahl von „der Apfel“",
+   "a": "die Äpfel",
+   "g": "mehrzahl"
+  },
+  {
+   "f": "Steigere „gut“",
+   "a": "besser – am besten",
+   "g": "steigerung"
+  },
+  {
+   "f": "Steigere „viel“",
+   "a": "mehr – am meisten",
+   "g": "steigerung"
+  },
+  {
+   "f": "Steigere „groß“",
+   "a": "größer – am größten",
+   "g": "steigerung"
+  },
+  {
+   "f": "Steigere „gern“",
+   "a": "lieber – am liebsten",
+   "g": "steigerung"
+  },
+  {
+   "f": "Steigere „hoch“",
+   "a": "höher – am höchsten",
+   "g": "steigerung"
+  },
+  {
+   "f": "Was schreibt man immer groß?",
+   "a": "Nomen und Satzanfänge",
+   "g": "regel"
+  },
+  {
+   "f": "Was gilt nach l, n, r?",
+   "a": "Danach steht nie tz und nie ck.",
+   "g": "regel"
+  },
+  {
+   "f": "Wie wird das lange i meistens geschrieben?",
+   "a": "als ie, z. B. Biene",
+   "g": "regel"
+  },
+  {
+   "f": "Woran erkennst du oft einen kurzen Vokal?",
+   "a": "Danach folgen zwei Konsonanten, z. B. Ball, Mitte.",
+   "g": "regel"
+  },
+  {
+   "f": "Was steht am Anfang und Ende der wörtlichen Rede?",
+   "a": "Anführungszeichen „ “",
+   "g": "regel"
+  },
+  {
+   "f": "Welches Satzzeichen steht nach einer Frage?",
+   "a": "das Fragezeichen ?",
+   "g": "regel"
+  }
+ ]
+}

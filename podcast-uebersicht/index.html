@@ -352,8 +352,14 @@
     .menu-tile:hover { transform: translateY(-3px) rotate(-.5deg); }
   }
   .section-head { margin-top: 10px; }
+  @media (min-width: 1000px) and (orientation: landscape) {
+    main .menu { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    main .menu-tile { min-height: min(56vh, 380px); }
+  }
+  .group-title { grid-column: 1 / -1; margin: 10px 4px -6px; font-size: 1.35rem; color: var(--purple); }
   @media (min-width: 601px) {
-    .menu-tile { min-height: min(46vh, 380px); font-size: 2.2rem; }
+    .menu { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .menu-tile { min-height: min(36vh, 300px); font-size: 2.2rem; }
     .menu-tile .icon { font-size: 6rem; }
   }
 
@@ -626,10 +632,12 @@
   const SECTIONS = {
     podcasts: { title: "Podcasts", icon: "🎧", color: "--c4" },
     videos: { title: "Videos", icon: "📺", color: "--c1" },
-    spiele: { title: "Spiele", icon: "🎮", color: "--c2" }
+    spiele: { title: "Spiele", icon: "🎮", color: "--c2" },
+    lernen: { title: "Lernen", icon: "🧠", color: "--c5" }
   };
 
   function sectionOf(p) {
+    if (p.section) return p.section;
     return p.type === "video" ? "videos" : p.type === "games" ? "spiele" : "podcasts";
   }
 
@@ -677,7 +685,7 @@
 
   function renderOverview(section) {
     gridEl.replaceChildren();
-    if (section === "spiele") { renderGames(); return; }
+    if (section === "spiele" || section === "lernen") { renderGames(section); return; }
     // Sendungen mit der neuesten Folge zuerst
     podcasts.map(function (p, index) { return index; })
       .filter(function (index) { return sectionOf(podcasts[index]) === section; })
@@ -700,10 +708,12 @@
     });
   }
 
-  // Alle Spiele aus allen "spiele:"-Zeilen als Kacheln
-  function renderGames() {
+  // Spiele bzw. Lernangebote als Kacheln; mehrere Gruppen bekommen je eine Überschrift
+  function renderGames(section) {
+    const groups = podcasts.filter(function (p) { return sectionOf(p) === section; });
     podcasts.forEach(function (p, pi) {
-      if (sectionOf(p) !== "spiele") return;
+      if (sectionOf(p) !== section) return;
+      if (groups.length > 1) gridEl.append(el("h3", "group-title", showName(p)));
       (p.episodes || []).forEach(function (game, gi) {
         if (!safeUrl(game.game_url)) return;
         const tile = el("button", "tile");
@@ -835,7 +845,7 @@
   function buildSearchIndex() {
     searchIndex = [];
     podcasts.forEach(function (p, pi) {
-      if (sectionOf(p) === "spiele") return;
+      if (p.type === "games") return;
       (p.episodes || []).forEach(function (ep, ei) {
         if (!isPlayable(ep)) return;
         searchIndex.push({
@@ -1288,7 +1298,7 @@
       detailEl.hidden = true;
       overviewEl.hidden = false;
       $("section-head").hidden = view === "menu";
-      $("search-form").hidden = view === "spiele";
+      $("search-form").hidden = view === "spiele" || view === "lernen";
       if (view === "menu") {
         renderMenu();
         document.title = "SpotiMy";
@@ -1297,7 +1307,7 @@
         renderOverview(view);
         document.title = SECTIONS[view].title + " – SpotiMy";
       }
-      if (view === "spiele") searchInput.value = "";
+      if (view === "spiele" || view === "lernen") searchInput.value = "";
       runSearch();
       window.scrollTo(0, 0);
     }

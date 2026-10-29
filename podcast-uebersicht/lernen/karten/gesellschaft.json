@@ -1,0 +1,201 @@
+{
+ "titel": "Gesellschaft & Politik",
+ "icon": "🏛️",
+ "karten": [
+  {
+   "f": "Hauptstadt von Deutschland",
+   "a": "Berlin",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Bayern",
+   "a": "München",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Nordrhein-Westfalen",
+   "a": "Düsseldorf",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Hessen",
+   "a": "Wiesbaden",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Niedersachsen",
+   "a": "Hannover",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Baden-Württemberg",
+   "a": "Stuttgart",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Sachsen",
+   "a": "Dresden",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Schleswig-Holstein",
+   "a": "Kiel",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Rheinland-Pfalz",
+   "a": "Mainz",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Thüringen",
+   "a": "Erfurt",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Brandenburg",
+   "a": "Potsdam",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt des Saarlands",
+   "a": "Saarbrücken",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Sachsen-Anhalt",
+   "a": "Magdeburg",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Hauptstadt von Mecklenburg-Vorpommern",
+   "a": "Schwerin",
+   "g": "hauptstadt"
+  },
+  {
+   "f": "Wie viele Bundesländer hat Deutschland?",
+   "a": "16",
+   "g": "deutschland"
+  },
+  {
+   "f": "Wie heißt der höchste Berg Deutschlands?",
+   "a": "die Zugspitze",
+   "g": "deutschland"
+  },
+  {
+   "f": "Welcher große Fluss fließt durch Köln und Düsseldorf?",
+   "a": "der Rhein",
+   "g": "deutschland"
+  },
+  {
+   "f": "An welche Meere grenzt Deutschland?",
+   "a": "Nordsee und Ostsee",
+   "g": "deutschland"
+  },
+  {
+   "f": "Welche Bundesländer sind Stadtstaaten?",
+   "a": "Berlin, Hamburg und Bremen",
+   "g": "deutschland"
+  },
+  {
+   "f": "Wer wählt den Bundestag?",
+   "a": "die Bürgerinnen und Bürger ab 18 Jahren",
+   "g": "demokratie"
+  },
+  {
+   "f": "Wo tagt der Bundestag?",
+   "a": "im Reichstagsgebäude in Berlin",
+   "g": "demokratie"
+  },
+  {
+   "f": "Wie heißt die Verfassung Deutschlands?",
+   "a": "das Grundgesetz",
+   "g": "demokratie"
+  },
+  {
+   "f": "Wer leitet eine Stadt oder Gemeinde?",
+   "a": "der Bürgermeister oder die Bürgermeisterin",
+   "g": "demokratie"
+  },
+  {
+   "f": "Was bedeutet „geheime Wahl“?",
+   "a": "Niemand sieht, wen ich wähle.",
+   "g": "demokratie"
+  },
+  {
+   "f": "Was macht der Klassenrat?",
+   "a": "Die Klasse bespricht Probleme und entscheidet gemeinsam.",
+   "g": "demokratie"
+  },
+  {
+   "f": "Seit wann gibt es die UN-Kinderrechtskonvention?",
+   "a": "seit 1989",
+   "g": "kinderrechte"
+  },
+  {
+   "f": "Nenne drei Kinderrechte.",
+   "a": "z. B. Bildung, Spiel und Freizeit, Schutz vor Gewalt",
+   "g": "kinderrechte"
+  },
+  {
+   "f": "Wann ist in Deutschland Weltkindertag?",
+   "a": "am 20. September",
+   "g": "kinderrechte"
+  },
+  {
+   "f": "Bis zu welchem Alter gilt man laut Kinderrechtskonvention als Kind?",
+   "a": "bis 18 Jahre",
+   "g": "kinderrechte"
+  },
+  {
+   "f": "Was braucht ein verkehrssicheres Fahrrad?",
+   "a": "zwei Bremsen, Klingel, Licht vorne und hinten, Reflektoren",
+   "g": "verkehr"
+  },
+  {
+   "f": "Wer hat am Zebrastreifen Vorrang?",
+   "a": "die Fußgängerinnen und Fußgänger",
+   "g": "verkehr"
+  },
+  {
+   "f": "Was gilt an einer Kreuzung ohne Ampel und Schilder?",
+   "a": "rechts vor links",
+   "g": "verkehr"
+  },
+  {
+   "f": "Welche Farbe hat das Licht hinten am Fahrrad?",
+   "a": "rot",
+   "g": "verkehr"
+  },
+  {
+   "f": "Welche Farbe hat das Licht vorne am Fahrrad?",
+   "a": "weiß",
+   "g": "verkehr"
+  },
+  {
+   "f": "Wo geht die Sonne auf?",
+   "a": "im Osten",
+   "g": "himmel"
+  },
+  {
+   "f": "Wo geht die Sonne unter?",
+   "a": "im Westen",
+   "g": "himmel"
+  },
+  {
+   "f": "Wo steht die Sonne bei uns mittags?",
+   "a": "im Süden",
+   "g": "himmel"
+  },
+  {
+   "f": "Welche Himmelsrichtung ist auf Landkarten meist oben?",
+   "a": "Norden",
+   "g": "himmel"
+  },
+  {
+   "f": "Was bedeutet der Maßstab 1 : 100 000?",
+   "a": "1 cm auf der Karte sind 1 km in Wirklichkeit.",
+   "g": "himmel"
+  }
+ ]
+}

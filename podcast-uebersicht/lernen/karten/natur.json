@@ -1,0 +1,211 @@
+{
+ "titel": "Natur & Technik",
+ "icon": "🔬",
+ "karten": [
+  {
+   "f": "Eis ist …",
+   "a": "fest",
+   "g": "zustand"
+  },
+  {
+   "f": "Wasser aus dem Wasserhahn ist …",
+   "a": "flüssig",
+   "g": "zustand"
+  },
+  {
+   "f": "Wasserdampf ist …",
+   "a": "gasförmig",
+   "g": "zustand"
+  },
+  {
+   "f": "Ein Stein ist …",
+   "a": "fest",
+   "g": "zustand"
+  },
+  {
+   "f": "Bei wie viel Grad gefriert Wasser?",
+   "a": "bei 0 °C",
+   "g": "temperatur"
+  },
+  {
+   "f": "Bei wie viel Grad kocht Wasser?",
+   "a": "bei 100 °C",
+   "g": "temperatur"
+  },
+  {
+   "f": "Wie warm ist ein gesunder Mensch ungefähr?",
+   "a": "etwa 37 °C",
+   "g": "temperatur"
+  },
+  {
+   "f": "Womit misst man die Temperatur?",
+   "a": "mit einem Thermometer",
+   "g": "temperatur"
+  },
+  {
+   "f": "Die Sonne erwärmt Wasser, es steigt als Dampf auf. Wie heißt das?",
+   "a": "Verdunstung",
+   "g": "kreislauf"
+  },
+  {
+   "f": "Wasserdampf kühlt oben ab und bildet Wolken. Wie heißt das?",
+   "a": "Kondensation",
+   "g": "kreislauf"
+  },
+  {
+   "f": "Regen, Schnee und Hagel nennt man …",
+   "a": "Niederschlag",
+   "g": "kreislauf"
+  },
+  {
+   "f": "Regenwasser, das im Boden versickert, wird zu …",
+   "a": "Grundwasser",
+   "g": "kreislauf"
+  },
+  {
+   "f": "Wann leuchtet eine Lampe im Stromkreis?",
+   "a": "wenn der Stromkreis geschlossen ist",
+   "g": "strom"
+  },
+  {
+   "f": "Welche Stoffe leiten Strom gut?",
+   "a": "Metalle, z. B. Kupfer und Eisen",
+   "g": "strom"
+  },
+  {
+   "f": "Wie nennt man Stoffe, die keinen Strom leiten?",
+   "a": "Nichtleiter oder Isolatoren",
+   "g": "strom"
+  },
+  {
+   "f": "Wozu dient ein Schalter?",
+   "a": "Er öffnet und schließt den Stromkreis.",
+   "g": "strom"
+  },
+  {
+   "f": "Warum darf man nie an der Steckdose experimentieren?",
+   "a": "230 Volt sind lebensgefährlich.",
+   "g": "strom"
+  },
+  {
+   "f": "Welche Metalle zieht ein Magnet an?",
+   "a": "Eisen, Nickel und Kobalt",
+   "g": "magnet"
+  },
+  {
+   "f": "Wie heißen die beiden Pole eines Magneten?",
+   "a": "Nordpol und Südpol",
+   "g": "magnet"
+  },
+  {
+   "f": "Was passiert, wenn sich zwei gleiche Pole nähern?",
+   "a": "Sie stoßen sich ab.",
+   "g": "magnet"
+  },
+  {
+   "f": "Was passiert mit einem Nordpol und einem Südpol?",
+   "a": "Sie ziehen sich an.",
+   "g": "magnet"
+  },
+  {
+   "f": "Warum zeigt eine Kompassnadel nach Norden?",
+   "a": "Sie ist ein Magnet und richtet sich nach dem Magnetfeld der Erde.",
+   "g": "magnet"
+  },
+  {
+   "f": "Aus welchen Teilen besteht eine Blütenpflanze?",
+   "a": "Wurzel, Sprossachse (Stängel), Blätter, Blüte",
+   "g": "pflanze"
+  },
+  {
+   "f": "Was brauchen Pflanzen zum Wachsen?",
+   "a": "Licht, Wasser, Luft und Nährstoffe",
+   "g": "pflanze"
+  },
+  {
+   "f": "Was stellen Pflanzen mit Sonnenlicht in ihren Blättern her?",
+   "a": "Zucker und Sauerstoff",
+   "g": "pflanze"
+  },
+  {
+   "f": "Wer bestäubt viele Blüten?",
+   "a": "Insekten, z. B. Bienen",
+   "g": "pflanze"
+  },
+  {
+   "f": "Wozu dient die Wurzel?",
+   "a": "Sie hält die Pflanze fest und nimmt Wasser auf.",
+   "g": "pflanze"
+  },
+  {
+   "f": "Zu welcher Tierklasse gehört der Frosch?",
+   "a": "Amphibien (Lurche)",
+   "g": "tierklasse"
+  },
+  {
+   "f": "Zu welcher Tierklasse gehört der Wal?",
+   "a": "Säugetiere",
+   "g": "tierklasse"
+  },
+  {
+   "f": "Zu welcher Tierklasse gehört der Pinguin?",
+   "a": "Vögel",
+   "g": "tierklasse"
+  },
+  {
+   "f": "Zu welcher Tierklasse gehört die Schlange?",
+   "a": "Reptilien (Kriechtiere)",
+   "g": "tierklasse"
+  },
+  {
+   "f": "Zu welcher Tierklasse gehört der Hai?",
+   "a": "Fische",
+   "g": "tierklasse"
+  },
+  {
+   "f": "Zu welcher Tierklasse gehört die Fledermaus?",
+   "a": "Säugetiere",
+   "g": "tierklasse"
+  },
+  {
+   "f": "Zu welcher Tierklasse gehört die Eidechse?",
+   "a": "Reptilien (Kriechtiere)",
+   "g": "tierklasse"
+  },
+  {
+   "f": "Zu welcher Tierklasse gehört der Salamander?",
+   "a": "Amphibien (Lurche)",
+   "g": "tierklasse"
+  },
+  {
+   "f": "Welches Organ pumpt das Blut durch den Körper?",
+   "a": "das Herz",
+   "g": "koerper"
+  },
+  {
+   "f": "Mit welchem Organ atmen wir?",
+   "a": "mit der Lunge",
+   "g": "koerper"
+  },
+  {
+   "f": "Welches Organ steuert den ganzen Körper?",
+   "a": "das Gehirn",
+   "g": "koerper"
+  },
+  {
+   "f": "Nenne die fünf Sinne.",
+   "a": "Sehen, Hören, Riechen, Schmecken, Tasten",
+   "g": "koerper"
+  },
+  {
+   "f": "Wie viele Knochen hat ein erwachsener Mensch ungefähr?",
+   "a": "etwa 206",
+   "g": "koerper"
+  },
+  {
+   "f": "Wie viele Milchzähne hat ein Kind?",
+   "a": "20",
+   "g": "koerper"
+  }
+ ]
+}
